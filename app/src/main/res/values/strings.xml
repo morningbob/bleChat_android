@@ -11,4 +11,11 @@
     <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
 
     <string name="permissionDescription">Please enable bluetooth and location for the app.  Bluetooth is required for the chat.  Location is required for discovering other bluetooth devices.</string>
+    <string name="bluetooth_enable_alert_title">Enable Bluetooth</string>
+    <string name="bluetooth_enable_alert_desc">The app needs bluetooth for all of its functions.  Please enable bluetooth.</string>
+    <string name="location_permission_alert_title">Grant Location Permission</string>
+    <string name="location_permission_alert_desc">The app needs location permission to scan for bluetooth devices.  Please grant location permission.</string>
+    <string name="ok_button">OK</string>
+    <string name="cancel_button">Cancel</string>
+
 </resources>

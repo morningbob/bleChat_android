@@ -6,23 +6,34 @@
     android:layout_height="match_parent"
     tools:context=".PermissionFragment">
 
-    <TextView
-        android:id="@+id/permission_text"
-        android:text="@string/permissionDescription"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toTopOf="@id/button_second"
+    <ImageView
+        android:id="@+id/logo"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="100dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@mipmap/blechat"
+        tools:srcCompat="@mipmap/blechat" />
+
+    <TextView
+        android:id="@+id/permission_text"
+        android:layout_width="250dp"
+        android:layout_height="120dp"
+        android:layout_marginTop="80dp"
+        android:text="@string/permissionDescription"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/logo" />
 
     <Button
         android:id="@+id/button_second"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="100dp"
         android:text="@string/previous"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/permission_text" />
+        app:layout_constraintTop_toBottomOf="@+id/permission_text" />
 </androidx.constraintlayout.widget.ConstraintLayout>
