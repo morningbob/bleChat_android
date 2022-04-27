@@ -17,5 +17,7 @@
     <string name="location_permission_alert_desc">The app needs location permission to scan for bluetooth devices.  Please grant location permission.</string>
     <string name="ok_button">OK</string>
     <string name="cancel_button">Cancel</string>
+    <string name="device_text">Devices</string>
+    <string name="scan_button">Scan For Devices</string>
 
 </resources>

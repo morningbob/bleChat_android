@@ -12,9 +12,6 @@ import com.bitpunchlab.android.blechat_android.databinding.FragmentMainBinding
 class MainFragment : Fragment() {
 
     private var _binding: FragmentMainBinding? = null
-
-    // This property is only valid between onCreateView and
-    // onDestroyView.
     private val binding get() = _binding!!
 
     override fun onCreateView(
@@ -23,6 +20,9 @@ class MainFragment : Fragment() {
     ): View? {
 
         _binding = FragmentMainBinding.inflate(inflater, container, false)
+
+
+
         return binding.root
 
     }
@@ -30,9 +30,7 @@ class MainFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.buttonFirst.setOnClickListener {
-            findNavController().navigate(R.id.action_MainFragment_to_PermissionFragment)
-        }
+
     }
 
     override fun onDestroyView() {
