@@ -7,7 +7,7 @@
             type="android.bluetooth.BluetoothDevice" />
         <variable
             name="onClickListener"
-            type="com.bitpunchlab.android.blechat_android.base.GenericListener" />
+            type="com.bitpunchlab.android.blechat_android.deviceList.DeviceListener" />
     </data>
 
     <LinearLayout
