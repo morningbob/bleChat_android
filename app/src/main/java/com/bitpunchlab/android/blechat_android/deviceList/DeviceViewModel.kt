@@ -40,6 +40,7 @@ class DeviceViewModel(application: Application) : AndroidViewModel(application) 
         Log.i(TAG, "just got adapter")
         bleScanner = bluetoothAdapter.bluetoothLeScanner
         coroutineScope = CoroutineScope(Dispatchers.Default)
+        _deviceList.value = emptyList()
     }
 
     fun onDeviceClicked(device: BluetoothDevice) {
@@ -55,9 +56,11 @@ class DeviceViewModel(application: Application) : AndroidViewModel(application) 
     // consider the case when the device suddenly disappear, how to detect this change
     private fun addADevice(newDevice: BluetoothDevice) {
         Log.i(TAG, "adding a device")
-        var list = deviceList.value as ArrayList<BluetoothDevice>
+        var list = deviceList.value
+
+                //as ArrayList<BluetoothDevice>
         var isExisted = false
-        var newList = list.map { device ->
+        var newList = list?.map { device ->
             if (device.address == newDevice.address) {
                 isExisted = true
                 Log.i(TAG, "update existing device")
@@ -70,8 +73,9 @@ class DeviceViewModel(application: Application) : AndroidViewModel(application) 
         if (!isExisted) {
             (newList as ArrayList<BluetoothDevice>).add(newDevice)
         }
-
-        _deviceList.value = newList
+        newList?.let {
+            _deviceList.value = it
+        }
     }
 
     @SuppressLint("MissingPermission")

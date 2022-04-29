@@ -14,6 +14,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.bitpunchlab.android.blechat_android.base.GenericListener
+import com.bitpunchlab.android.blechat_android.chat.ChatServiceManager
 import com.bitpunchlab.android.blechat_android.databinding.FragmentMainBinding
 import com.bitpunchlab.android.blechat_android.deviceList.DeviceListAdapter
 import com.bitpunchlab.android.blechat_android.deviceList.DeviceListener
@@ -27,6 +28,7 @@ class MainFragment : Fragment() {
     private val binding get() = _binding!!
     private lateinit var deviceAdapter: DeviceListAdapter
     private lateinit var deviceViewModel: DeviceViewModel
+    private lateinit var chatServiceManager: ChatServiceManager
     //private var bluetoothAdapter: BluetoothAdapter? = null
 
     override fun onCreateView(
@@ -61,6 +63,10 @@ class MainFragment : Fragment() {
 
         binding.scanButton.setOnClickListener {
             deviceViewModel.scanLeDevice()
+        }
+
+        binding.startServerButton.setOnClickListener {
+            ChatServiceManager.startChatServer(requireActivity().application)
         }
 
         return binding.root
