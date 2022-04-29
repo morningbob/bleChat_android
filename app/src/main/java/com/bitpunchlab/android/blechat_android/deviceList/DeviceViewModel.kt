@@ -13,11 +13,15 @@ import android.os.Looper
 import android.util.Log
 import android.view.View
 import androidx.lifecycle.*
+import com.bitpunchlab.android.blechat_android.chat.ChatServiceClient
+import com.bitpunchlab.android.blechat_android.chat.ChatServiceManager
 import kotlinx.coroutines.*
 import java.util.logging.Handler
 
 private const val TAG = "DeviceViewModel"
 
+// we do the scanning in the device view model because the information got will
+// be saved there.  I want the info to persist too.
 class DeviceViewModel(application: Application) : AndroidViewModel(application) {
 
     private var bluetoothAdapter: BluetoothAdapter
@@ -33,8 +37,9 @@ class DeviceViewModel(application: Application) : AndroidViewModel(application) 
     var _chosenDevice = MutableLiveData<BluetoothDevice?>()
     val chosenDevice : LiveData<BluetoothDevice?> get() = _chosenDevice
 
+    // getApplication<Application>()
     init {
-        val bluetoothManager = getApplication<Application>().getSystemService(Context.BLUETOOTH_SERVICE)
+        val bluetoothManager = application.getSystemService(Context.BLUETOOTH_SERVICE)
                 as BluetoothManager
         bluetoothAdapter = bluetoothManager.adapter
         Log.i(TAG, "just got adapter")
@@ -97,6 +102,10 @@ class DeviceViewModel(application: Application) : AndroidViewModel(application) 
             scanning.postValue(false)
             bleScanner.stopScan(deviceScanCallback)
         }
+    }
+
+    fun connectToDevice(device: BluetoothDevice) {
+        //ChatServiceClient.connectToDevice(device, application)
     }
 
     private inner class DeviceScanCallback : ScanCallback() {

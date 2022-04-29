@@ -18,6 +18,9 @@
     <string name="ok_button">OK</string>
     <string name="cancel_button">Cancel</string>
     <string name="device_text">Devices</string>
-    <string name="scan_button">Scan For Devices</string>
+    <string name="scan_button">Scan Devices</string>
+    <string name="connect_device_alert_title">Connect to Device</string>
+    <string name="connect_device_alert_desc"></string>
+    <string name="confirm_button">Confirm</string>
 
 </resources>
