@@ -59,6 +59,10 @@ class MainFragment : Fragment() {
             }
         })
 
+        binding.scanButton.setOnClickListener {
+            deviceViewModel.scanLeDevice()
+        }
+
         return binding.root
     }
 

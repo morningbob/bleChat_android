@@ -23,22 +23,15 @@ class DeviceViewModel(application: Application) : AndroidViewModel(application) 
     private var bluetoothAdapter: BluetoothAdapter
     private var bleScanner: BluetoothLeScanner
     private val SCAN_PERIOD: Long = 10000
-    private var scanning = false
+    private var scanning = MutableLiveData<Boolean>(false)
     private var coroutineScope: CoroutineScope
+    private var deviceScanCallback = DeviceScanCallback()
 
     var _deviceList = MutableLiveData<List<BluetoothDevice>>()
     val deviceList : LiveData<List<BluetoothDevice>> get() = _deviceList
 
     var _chosenDevice = MutableLiveData<BluetoothDevice?>()
     val chosenDevice : LiveData<BluetoothDevice?> get() = _chosenDevice
-
-    private val scanCallback: ScanCallback = object : ScanCallback() {
-        override fun onScanResult(callbackType: Int, result: ScanResult?) {
-            super.onScanResult(callbackType, result)
-            // add the newly discovered device here
-
-        }
-    }
 
     init {
         val bluetoothManager = getApplication<Application>().getSystemService(Context.BLUETOOTH_SERVICE)
@@ -57,29 +50,72 @@ class DeviceViewModel(application: Application) : AndroidViewModel(application) 
         _chosenDevice.value = null
     }
 
-    private fun addADevice() {
-        var list = deviceList.value
-        list
+    // we need to add to the list in this way, we can't add to mutable live data list directly
+    // we also check if the device already exists
+    // consider the case when the device suddenly disappear, how to detect this change
+    private fun addADevice(newDevice: BluetoothDevice) {
+        Log.i(TAG, "adding a device")
+        var list = deviceList.value as ArrayList<BluetoothDevice>
+        var isExisted = false
+        var newList = list.map { device ->
+            if (device.address == newDevice.address) {
+                isExisted = true
+                Log.i(TAG, "update existing device")
+                newDevice
+            } else {
+                Log.i(TAG, "old device")
+                device
+            }
+        }
+        if (!isExisted) {
+            (newList as ArrayList<BluetoothDevice>).add(newDevice)
+        }
+
+        _deviceList.value = newList
     }
 
     @SuppressLint("MissingPermission")
-    private fun scanLeDevice() {
+    fun scanLeDevice() {
         if (!bluetoothAdapter.isMultipleAdvertisementSupported) {
             Log.i(TAG, "no advertising")
             return
         }
-        if (!scanning) {
+        if (!scanning.value!!) {
             coroutineScope.launch {
                 delay(SCAN_PERIOD)
-                scanning = false
-                bleScanner.stopScan(scanCallback)
+                scanning.postValue(false)
+                bleScanner.stopScan(deviceScanCallback)
                 Log.i(TAG, "stop scanning")
             }
-            scanning = true
-            bleScanner.startScan(scanCallback)
+            scanning.postValue(true)
+            bleScanner.startScan(deviceScanCallback)
         } else {
-            scanning = false
-            bleScanner.stopScan(scanCallback)
+            scanning.postValue(false)
+            bleScanner.stopScan(deviceScanCallback)
+        }
+    }
+
+    private inner class DeviceScanCallback : ScanCallback() {
+        override fun onBatchScanResults(results: MutableList<ScanResult>?) {
+            super.onBatchScanResults(results)
+            results?.let {
+                for (item in results) {
+                    addADevice(item.device)
+                }
+            }
+        }
+
+        override fun onScanResult(callbackType: Int, result: ScanResult?) {
+            super.onScanResult(callbackType, result)
+            result?.device?.let { device ->
+                Log.i(TAG, "added a device")
+                addADevice(device)
+            }
+        }
+
+        override fun onScanFailed(errorCode: Int) {
+            super.onScanFailed(errorCode)
+            Log.i(TAG, "scan error: $errorCode")
         }
     }
 }
