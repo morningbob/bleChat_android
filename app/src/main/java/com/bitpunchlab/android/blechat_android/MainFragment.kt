@@ -20,6 +20,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.bitpunchlab.android.blechat_android.base.GenericListener
+import com.bitpunchlab.android.blechat_android.chat.ChatServiceClient
 import com.bitpunchlab.android.blechat_android.chat.ChatServiceManager
 import com.bitpunchlab.android.blechat_android.databinding.FragmentMainBinding
 import com.bitpunchlab.android.blechat_android.deviceList.DeviceListAdapter
@@ -69,6 +70,14 @@ class MainFragment : Fragment() {
             }
         })
 
+        ChatServiceManager.isServerRunning.observe(viewLifecycleOwner, Observer { value ->
+            if (value == null || value == false) {
+                binding.startServerButton.text = "Start Server"
+            } else {
+                binding.startServerButton.text = "Stop Server"
+            }
+        })
+
         binding.scanButton.setOnClickListener {
             deviceViewModel.scanLeDevice()
         }
@@ -107,6 +116,7 @@ class MainFragment : Fragment() {
         connectAlert.setPositiveButton(getString(R.string.confirm_button),
             DialogInterface.OnClickListener() { dialog, button ->
                 // connect to the device
+                deviceViewModel.connectToDevice(device)
             })
         connectAlert.setNegativeButton(getString(R.string.cancel_button),
             DialogInterface.OnClickListener() { dialog, button ->

@@ -105,7 +105,7 @@ class DeviceViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun connectToDevice(device: BluetoothDevice) {
-        //ChatServiceClient.connectToDevice(device, application)
+        ChatServiceClient.connectToDevice(device, getApplication<Application>())
     }
 
     private inner class DeviceScanCallback : ScanCallback() {

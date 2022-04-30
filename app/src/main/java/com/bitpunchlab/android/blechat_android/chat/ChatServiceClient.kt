@@ -7,6 +7,8 @@ import android.bluetooth.*
 import android.content.pm.PackageManager
 import android.util.Log
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.MutableLiveData
+import com.bitpunchlab.android.blechat_android.ConnectionState
 
 private const val TAG = "ChatServiceClient"
 
@@ -16,6 +18,7 @@ object ChatServiceClient {
     private lateinit var bluetoothAdapter: BluetoothAdapter
     private lateinit var bluetoothManager: BluetoothManager
     private var gattClient: BluetoothGatt? = null
+    var connectionState = MutableLiveData<ConnectionState>(ConnectionState.STATE_NONE)
 
     private var gattClientCallback = object : BluetoothGattCallback() {
         @SuppressLint("MissingPermission")
@@ -45,6 +48,4 @@ object ChatServiceClient {
 
         gattClient = device.connectGatt(app, false, gattClientCallback)
     }
-
-
 }
