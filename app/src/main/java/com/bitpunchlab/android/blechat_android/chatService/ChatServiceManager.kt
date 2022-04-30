@@ -1,6 +1,5 @@
-package com.bitpunchlab.android.blechat_android.chat
+package com.bitpunchlab.android.blechat_android.chatService
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Application
 import android.bluetooth.*
@@ -9,10 +8,8 @@ import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.bluetooth.le.BluetoothLeAdvertiser
 import android.content.Context
-import android.content.pm.PackageManager
 import android.os.ParcelUuid
 import android.util.Log
-import androidx.core.app.ActivityCompat
 import androidx.lifecycle.MutableLiveData
 import com.bitpunchlab.android.blechat_android.ConnectionState
 import com.bitpunchlab.android.blechat_android.MESSAGE_UUID
@@ -34,7 +31,7 @@ object ChatServiceManager {
     var connectionState = MutableLiveData<ConnectionState>(ConnectionState.STATE_NONE)
     private var connectedDevice: BluetoothDevice? = null
     var isServerRunning = MutableLiveData<Boolean>(false)
-    private var _message = MutableLiveData<String>()
+    private var _message = MutableLiveData<MessageModel>()
     val message get() = _message
 
     private var gattServerCallback = object : BluetoothGattServerCallback() {
@@ -72,16 +69,17 @@ object ChatServiceManager {
                 offset,
                 value
             )
-
+            Log.i(TAG, "onChar Write, getting message")
             // check if it is the target characteristic
             characteristic?.let { char ->
                 if (char.uuid == MESSAGE_UUID) {
                     val msg = value?.toString(Charsets.UTF_8)
+                    Log.i(TAG, "message received: $msg")
                     val msgModel =
                         MessageModel(content = msg.toString(),
                         deviceAddress = device!!.address,
                         deviceName = device?.name)
-                    _message.postValue(msg.toString())
+                    _message.postValue(msgModel)
                 }
             }
 
@@ -110,11 +108,13 @@ object ChatServiceManager {
         bluetoothAdapter = bluetoothManager.adapter
         setupGattServer()
         startAdvertising()
+        Log.i(TAG, "starting server")
         isServerRunning.value = true
     }
 
     @SuppressLint("MissingPermission")
     fun stopChatServer() {
+        Log.i(TAG, "stopping server")
         stopAdvertising()
         gattServer?.let { gatt ->
             gatt.clearServices()
@@ -126,6 +126,7 @@ object ChatServiceManager {
 
     @SuppressLint("MissingPermission")
     private fun setupGattServer() {
+        Log.i(TAG, "setting up server")
         gattServer = bluetoothManager.openGattServer(app, gattServerCallback).apply {
             addService(gattService())
         }
@@ -148,6 +149,10 @@ object ChatServiceManager {
     private fun stopAdvertising() {
         advertiser?.stopAdvertising(advertiseCallback)
         advertiseCallback = null
+    }
+
+    fun sendMessage(msg: String) {
+        Log.i(TAG, "server will send message here")
     }
 
     private fun buildAdvertiseSettings() : AdvertiseSettings {

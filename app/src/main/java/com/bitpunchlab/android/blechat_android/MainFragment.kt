@@ -1,33 +1,27 @@
 package com.bitpunchlab.android.blechat_android
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.app.AlertDialog
-import android.app.Application
-import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.content.DialogInterface
-import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.app.ActivityCompat
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.fragment.findNavController
-import com.bitpunchlab.android.blechat_android.base.GenericListener
-import com.bitpunchlab.android.blechat_android.chat.ChatServiceClient
-import com.bitpunchlab.android.blechat_android.chat.ChatServiceManager
+import com.bitpunchlab.android.blechat_android.chatService.ChatServiceClient
+import com.bitpunchlab.android.blechat_android.chatService.ChatServiceManager
 import com.bitpunchlab.android.blechat_android.databinding.FragmentMainBinding
 import com.bitpunchlab.android.blechat_android.deviceList.DeviceListAdapter
 import com.bitpunchlab.android.blechat_android.deviceList.DeviceListener
 import com.bitpunchlab.android.blechat_android.deviceList.DeviceViewModel
 import com.bitpunchlab.android.blechat_android.deviceList.DeviceViewModelFactory
+import com.bitpunchlab.android.blechat_android.models.MessageModel
 
+private const val TAG = "MainFragment"
 
 class MainFragment : Fragment() {
 
@@ -36,8 +30,10 @@ class MainFragment : Fragment() {
     private lateinit var deviceAdapter: DeviceListAdapter
     private lateinit var deviceViewModel: DeviceViewModel
     private var connectDevice: BluetoothDevice? = null
+    //private var messageList: List<MessageModel>
     //private var bluetoothAdapter: BluetoothAdapter? = null
 
+    @SuppressLint("MissingPermission")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -50,6 +46,7 @@ class MainFragment : Fragment() {
             .get(DeviceViewModel::class.java)
         deviceAdapter = DeviceListAdapter(DeviceListener { device ->
             // show an alert to confirm user wants to connect to the chosen device
+            Log.i(TAG, "device clicked, name ${device!!.name}")
             connectDeviceAlert(device)
             deviceViewModel.onDeviceClicked(device)
         })
@@ -77,6 +74,7 @@ class MainFragment : Fragment() {
                 binding.startServerButton.text = "Stop Server"
             }
         })
+
 
         binding.scanButton.setOnClickListener {
             deviceViewModel.scanLeDevice()

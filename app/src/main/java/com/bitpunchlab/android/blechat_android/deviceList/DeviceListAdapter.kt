@@ -10,7 +10,7 @@ import com.bitpunchlab.android.blechat_android.base.GenericRecyclerViewAdapter
 import com.bitpunchlab.android.blechat_android.databinding.ItemDeviceBinding
 import com.bitpunchlab.android.blechat_android.models.DeviceModel
 
-class DeviceListAdapter(clickListener: GenericListener<BluetoothDevice>?
+class DeviceListAdapter(clickListener: DeviceListener?
 ) :
     GenericRecyclerViewAdapter<BluetoothDevice>(
     layoutID = R.layout.item_device,
@@ -24,6 +24,7 @@ class DeviceListAdapter(clickListener: GenericListener<BluetoothDevice>?
             onClickListener: GenericListener<BluetoothDevice>?
         ) {
             (binding as ItemDeviceBinding).bluetoothDevice = item
+            binding.onClickListener = clickListener
         }
     }
     ) {

@@ -9,14 +9,10 @@ import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.content.Context
-import android.os.Looper
 import android.util.Log
-import android.view.View
 import androidx.lifecycle.*
-import com.bitpunchlab.android.blechat_android.chat.ChatServiceClient
-import com.bitpunchlab.android.blechat_android.chat.ChatServiceManager
+import com.bitpunchlab.android.blechat_android.chatService.ChatServiceClient
 import kotlinx.coroutines.*
-import java.util.logging.Handler
 
 private const val TAG = "DeviceViewModel"
 

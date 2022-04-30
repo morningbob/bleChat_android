@@ -14,6 +14,9 @@
         <action
             android:id="@+id/action_MainFragment_to_PermissionFragment"
             app:destination="@id/PermissionFragment" />
+        <action
+            android:id="@+id/action_MainFragment_to_chatFragment"
+            app:destination="@id/chatFragment" />
     </fragment>
     <fragment
         android:id="@+id/PermissionFragment"
@@ -24,5 +27,14 @@
         <action
             android:id="@+id/action_PermissionFragment_to_MainFragment"
             app:destination="@id/MainFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/chatFragment"
+        android:name="com.bitpunchlab.android.blechat_android.chat.ChatFragment"
+        android:label="ChatFragment" >
+        <argument
+            android:name="isClient"
+            app:argType="boolean"
+            android:defaultValue="false" />
     </fragment>
 </navigation>

@@ -22,5 +22,7 @@
     <string name="connect_device_alert_title">Connect to Device</string>
     <string name="connect_device_alert_desc"></string>
     <string name="confirm_button">Confirm</string>
+    <string name="send_button">Send</string>
+    <string name="message_title">Messages</string>
 
 </resources>
