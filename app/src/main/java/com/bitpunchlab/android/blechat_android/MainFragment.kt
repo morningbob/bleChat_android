@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
 import com.bitpunchlab.android.blechat_android.chatService.ChatServiceClient
 import com.bitpunchlab.android.blechat_android.chatService.ChatServiceManager
 import com.bitpunchlab.android.blechat_android.databinding.FragmentMainBinding
@@ -47,8 +48,9 @@ class MainFragment : Fragment() {
         deviceAdapter = DeviceListAdapter(DeviceListener { device ->
             // show an alert to confirm user wants to connect to the chosen device
             Log.i(TAG, "device clicked, name ${device!!.name}")
-            connectDeviceAlert(device)
+
             deviceViewModel.onDeviceClicked(device)
+            connectDeviceAlert(device)
         })
 
         binding.devicesRecycler.adapter = deviceAdapter
@@ -75,6 +77,14 @@ class MainFragment : Fragment() {
             }
         })
 
+        ChatServiceManager.connectionState.observe(viewLifecycleOwner, Observer { state ->
+            if (state == ConnectionState.STATE_CONNECTED) {
+                // navigate to chat view
+                val bundle = Bundle()
+                bundle.putBoolean("isClient", false)
+                findNavController().navigate(R.id.action_MainFragment_to_chatFragment, bundle)
+            }
+        })
 
         binding.scanButton.setOnClickListener {
             deviceViewModel.scanLeDevice()
@@ -115,6 +125,9 @@ class MainFragment : Fragment() {
             DialogInterface.OnClickListener() { dialog, button ->
                 // connect to the device
                 deviceViewModel.connectToDevice(device)
+                val bundle = Bundle()
+                bundle.putBoolean("isClient", true)
+                findNavController().navigate(R.id.action_MainFragment_to_chatFragment, bundle)
             })
         connectAlert.setNegativeButton(getString(R.string.cancel_button),
             DialogInterface.OnClickListener() { dialog, button ->

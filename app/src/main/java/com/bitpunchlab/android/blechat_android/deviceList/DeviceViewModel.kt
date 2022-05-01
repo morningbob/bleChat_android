@@ -59,7 +59,7 @@ class DeviceViewModel(application: Application) : AndroidViewModel(application) 
         Log.i(TAG, "adding a device")
         var list = deviceList.value
 
-                //as ArrayList<BluetoothDevice>
+        //as ArrayList<BluetoothDevice>
         var isExisted = false
         var newList = list?.map { device ->
             if (device.address == newDevice.address) {

@@ -6,17 +6,20 @@ import com.bitpunchlab.android.blechat_android.models.MessageModel
 
 class MessageViewModel : ViewModel() {
 
-    private var _messageList = MutableLiveData<List<MessageModel>>()
+    private var _messageList = MutableLiveData<List<MessageModel>>(emptyList())
     val messageList get() = _messageList
 
     fun addMessage(msgModel: MessageModel) {
-        val list = messageList.value as MutableList<MessageModel>
-        //(list as ArrayList<MessageModel>).add(msgModel)
-        list.add(msgModel)
+        var list = messageList.value //
+        if (list!!.isNotEmpty()) {
+            (list as MutableList<MessageModel>).add(msgModel)
+        } else {
+            list = mutableListOf(msgModel)
+        }
         _messageList.value = list!!
     }
 
     init {
-        _messageList.value = emptyList()
+        //_messageList.value = emptyList()
     }
 }

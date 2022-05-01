@@ -12,6 +12,7 @@ import android.os.ParcelUuid
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import com.bitpunchlab.android.blechat_android.ConnectionState
+import com.bitpunchlab.android.blechat_android.DESCRIPTOR_MESSAGE_UUID
 import com.bitpunchlab.android.blechat_android.MESSAGE_UUID
 import com.bitpunchlab.android.blechat_android.SERVICE_UUID
 import com.bitpunchlab.android.blechat_android.models.MessageModel
@@ -82,8 +83,37 @@ object ChatServiceManager {
                     _message.postValue(msgModel)
                 }
             }
+        }
 
+        // when client set notification, this method is triggered
+        // the success response the client receive comes from here.
+        // we set the success response here and send to the client.
+        @SuppressLint("MissingPermission")
+        override fun onDescriptorWriteRequest(
+            device: BluetoothDevice?,
+            requestId: Int,
+            descriptor: BluetoothGattDescriptor?,
+            preparedWrite: Boolean,
+            responseNeeded: Boolean,
+            offset: Int,
+            value: ByteArray?
+        ) {
+            super.onDescriptorWriteRequest(
+                device,
+                requestId,
+                descriptor,
+                preparedWrite,
+                responseNeeded,
+                offset,
+                value
+            )
 
+            descriptor?.let { descr ->
+                if (descr.uuid == DESCRIPTOR_MESSAGE_UUID) {
+                    gattServer!!.sendResponse(device, requestId,
+                        BluetoothGatt.GATT_SUCCESS, 0, null)
+                }
+            }
         }
     }
 
@@ -95,6 +125,11 @@ object ChatServiceManager {
                 BluetoothGattCharacteristic.PROPERTY_NOTIFY,
             BluetoothGattCharacteristic.PERMISSION_READ or BluetoothGattCharacteristic.PERMISSION_WRITE)
 
+        val messageDescriptor = BluetoothGattDescriptor(DESCRIPTOR_MESSAGE_UUID,
+            BluetoothGattDescriptor.PERMISSION_WRITE or
+                    BluetoothGattDescriptor.PERMISSION_READ)
+
+        messageCharacteristic.addDescriptor(messageDescriptor)
         gattService.addCharacteristic(messageCharacteristic)
 
         return gattService
@@ -153,6 +188,7 @@ object ChatServiceManager {
 
     fun sendMessage(msg: String) {
         Log.i(TAG, "server will send message here")
+
     }
 
     private fun buildAdvertiseSettings() : AdvertiseSettings {

@@ -36,6 +36,8 @@ class ChatFragment : Fragment() {
     ): View? {
         _binding = FragmentChatBinding.inflate(inflater, container, false)
 
+        isClient = requireArguments().getBoolean("isClient")
+
         messageViewModel = ViewModelProvider(requireActivity()).get(MessageViewModel::class.java)
         messageAdapter = MessageListAdapter()
         binding.messageRecycler.adapter = messageAdapter
@@ -70,6 +72,7 @@ class ChatFragment : Fragment() {
                 } else {
                     ChatServiceClient.sendMessage(msg)
                 }
+                binding.messageEditText.text = ""
             }
         }
 

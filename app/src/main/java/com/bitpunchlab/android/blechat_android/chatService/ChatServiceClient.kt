@@ -9,6 +9,7 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.MutableLiveData
 import com.bitpunchlab.android.blechat_android.ConnectionState
+import com.bitpunchlab.android.blechat_android.DESCRIPTOR_MESSAGE_UUID
 import com.bitpunchlab.android.blechat_android.MESSAGE_UUID
 import com.bitpunchlab.android.blechat_android.SERVICE_UUID
 import com.bitpunchlab.android.blechat_android.base.ChatServiceBase
@@ -40,15 +41,17 @@ object ChatServiceClient {
             Log.i(TAG, "client callback: success? $statusSuccess; connected? $stateConnected")
 
             gatt?.let {
-                // keep the reference
-                //gattClient = gatt
                 if (statusSuccess && stateConnected) {
                     gatt.discoverServices()
+                    connectionState.postValue(ConnectionState.STATE_CONNECTED)
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                     Log.i(TAG, "client callback: disconnected")
                     gatt.close()
+                    connectionState.postValue(ConnectionState.STATE_DISCONNECTED)
+                    connectedDevice = null
                 } else {
                     Log.i(TAG, "client callback: else case")
+                    connectionState.postValue(ConnectionState.STATE_DISCONNECTED)
                     connectedDevice = null
                 }
             }
@@ -69,8 +72,45 @@ object ChatServiceClient {
                     messageCharacteristic = service.getCharacteristic(MESSAGE_UUID)
                     if (messageCharacteristic != null) {
                         Log.i(TAG, "got message char")
+                        setNotification(messageCharacteristic!!)
                     } else {
                         Log.i(TAG, "couldn't get message char")
+                    }
+                }
+            }
+        }
+
+        // we know if the notification is successfully set here.
+        override fun onDescriptorWrite(
+            gatt: BluetoothGatt?,
+            descriptor: BluetoothGattDescriptor?,
+            status: Int
+        ) {
+            super.onDescriptorWrite(gatt, descriptor, status)
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.i(TAG, "onDescriptorWrite: notification set successfully.")
+            } else {
+                Log.i(TAG, "onDescriptorWrite: set notification failed.")
+            }
+        }
+
+        // after the notification set, this method will be triggered whenever server
+        // write a message to the characteristic.  we retrieve the message here
+        @SuppressLint("MissingPermission")
+        override fun onCharacteristicChanged(
+            gatt: BluetoothGatt?,
+            characteristic: BluetoothGattCharacteristic?
+        ) {
+            super.onCharacteristicChanged(gatt, characteristic)
+            Log.i(TAG, "onCharChanged")
+            characteristic?.value.let { value ->
+                if (characteristic!!.uuid == MESSAGE_UUID) {
+                    value?.let {
+                        val msg = it.toString(Charsets.UTF_8)
+                        val msgModel = MessageModel(content = msg,
+                            deviceName = connectedDevice!!.name,
+                        deviceAddress = connectedDevice!!.address)
+                        _message.postValue(msgModel)
                     }
                 }
             }
@@ -119,5 +159,14 @@ object ChatServiceClient {
         return false
     }
 
-
+    @SuppressLint("MissingPermission")
+    private fun setNotification(characteristic: BluetoothGattCharacteristic) {
+        Log.i(TAG, "setting notification")
+        gattClient!!.setCharacteristicNotification(characteristic, true)
+        // retrieve descriptor and put value in it, then write it back
+        val messageDescriptor = characteristic.getDescriptor(DESCRIPTOR_MESSAGE_UUID)
+        messageDescriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+        gattClient!!.writeDescriptor(messageDescriptor)
+        Log.i(TAG, "finish setting notification")
+    }
 }
