@@ -72,7 +72,7 @@ class ChatFragment : Fragment() {
                 } else {
                     ChatServiceClient.sendMessage(msg)
                 }
-                binding.messageEditText.text = ""
+                binding.messageEditText.text = null
             }
         }
 

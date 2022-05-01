@@ -107,11 +107,12 @@ object ChatServiceManager {
                 offset,
                 value
             )
-
+            Log.i(TAG, "server: onDescrWrite request")
             descriptor?.let { descr ->
                 if (descr.uuid == DESCRIPTOR_MESSAGE_UUID) {
                     gattServer!!.sendResponse(device, requestId,
                         BluetoothGatt.GATT_SUCCESS, 0, null)
+                    Log.i(TAG, "sent success response to client")
                 }
             }
         }
@@ -186,9 +187,30 @@ object ChatServiceManager {
         advertiseCallback = null
     }
 
-    fun sendMessage(msg: String) {
+    // server send message to client by writing on characteristic, then
+    // notify client there is changes.
+    @SuppressLint("MissingPermission")
+    fun sendMessage(msg: String) : Boolean {
         Log.i(TAG, "server will send message here")
+        if (gattServer != null) {
+            val service = gattServer!!.getService(SERVICE_UUID)
+            val characteristic = service.getCharacteristic(MESSAGE_UUID)
+            val messageBytes = msg.toByteArray(Charsets.UTF_8)
+            characteristic.value = messageBytes
 
+            // here, we notify client
+            val success = gattServer!!.notifyCharacteristicChanged(connectedDevice, characteristic, false)
+            Log.i(TAG, "server wrote to character and notify client, success? $success")
+
+            // we need to display the message user said to the message list.
+            val msgModel = MessageModel(content = msg, deviceName = "You",
+                deviceAddress = connectedDevice!!.address)
+            _message.postValue(msgModel)
+        } else {
+            Log.i(TAG, "can't send message.  gatt is null")
+            return false
+        }
+        return false
     }
 
     private fun buildAdvertiseSettings() : AdvertiseSettings {

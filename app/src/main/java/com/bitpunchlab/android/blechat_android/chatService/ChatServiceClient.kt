@@ -147,7 +147,7 @@ object ChatServiceClient {
                 Log.i(TAG, "write success? $writeSuccess")
                 if (writeSuccess) {
                     val messageModel = MessageModel(content = msg, deviceAddress = connectedDevice!!.address,
-                    deviceName = connectedDevice!!.name)
+                    deviceName = "You")
                     _message.value = messageModel
                     return true
                 } else {
