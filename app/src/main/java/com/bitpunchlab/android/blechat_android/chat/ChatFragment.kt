@@ -1,5 +1,9 @@
 package com.bitpunchlab.android.blechat_android.chat
 
+import android.annotation.SuppressLint
+import android.app.AlertDialog
+import android.bluetooth.BluetoothDevice
+import android.content.DialogInterface
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -8,6 +12,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
+import com.bitpunchlab.android.blechat_android.ConnectionState
 import com.bitpunchlab.android.blechat_android.R
 import com.bitpunchlab.android.blechat_android.chatService.ChatServiceClient
 import com.bitpunchlab.android.blechat_android.chatService.ChatServiceManager
@@ -63,6 +69,24 @@ class ChatFragment : Fragment() {
                 messageViewModel.addMessage(msg)
             }
         })
+
+        ChatServiceManager.connectionState.observe(viewLifecycleOwner, Observer { state ->
+            if (state == ConnectionState.STATE_DISCONNECTED) {
+                // alert user of the disconnection
+                //if (!isClient) {
+                    disconnectionAlert(ChatServiceManager.connectedDevice!!)
+                //} else {
+                    //disconnectionAlert(ChatServiceClient.connectedDevice!!)
+                //}
+            }
+        })
+
+        ChatServiceClient.connectionState.observe(viewLifecycleOwner, Observer { state ->
+            if (state == ConnectionState.STATE_DISCONNECTED) {
+                disconnectionAlert(ChatServiceClient.connectedDevice!!)
+            }
+        })
+
         binding.sendButton.setOnClickListener {
             if (!binding.messageEditText.text.isNullOrBlank()) {
                 val msg = binding.messageEditText.text.toString()
@@ -82,5 +106,27 @@ class ChatFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun disconnectionAlert(device: BluetoothDevice) {
+        val disconnectAlert = AlertDialog.Builder(context)
+
+        var identity = ""
+
+        if (!device.name.isNullOrBlank()) {
+            identity = device.name
+        } else if (!device.address.isNullOrBlank()) {
+            identity = "device with the address ${device.address}"
+        }
+
+        disconnectAlert.setTitle(getString(R.string.disconnection_alert_title))
+        disconnectAlert.setMessage("Disconnected with $identity")
+        disconnectAlert.setPositiveButton(getString(R.string.ok_button),
+            DialogInterface.OnClickListener() { dialog, button ->
+
+            })
+
+        disconnectAlert.show()
     }
 }

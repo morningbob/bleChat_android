@@ -24,5 +24,11 @@
     <string name="confirm_button">Confirm</string>
     <string name="send_button">Send</string>
     <string name="message_title">Messages</string>
+    <string name="start_server">Start Server</string>
+    <string name="stop_server">Stop Server</string>
+    <string name="incoming_connection_alert_title">Incoming Connection</string>
+    <string name="incoming_connection_alert_desc"></string>
+    <string name="accept_button">Accept</string>
+    <string name="disconnection_alert_title">Disconnection</string>
 
 </resources>

@@ -71,18 +71,22 @@ class MainFragment : Fragment() {
 
         ChatServiceManager.isServerRunning.observe(viewLifecycleOwner, Observer { value ->
             if (value == null || value == false) {
-                binding.startServerButton.text = "Start Server"
+                binding.startServerButton.text = getString(R.string.start_server)
             } else {
-                binding.startServerButton.text = "Stop Server"
+                binding.startServerButton.text = getString(R.string.stop_server)
             }
         })
 
         ChatServiceManager.connectionState.observe(viewLifecycleOwner, Observer { state ->
             if (state == ConnectionState.STATE_CONNECTED) {
+                // ask user if he accepts the incoming connection
+                incomingConnectionAlert(ChatServiceManager.connectedDevice!!)
                 // navigate to chat view
                 val bundle = Bundle()
                 bundle.putBoolean("isClient", false)
                 findNavController().navigate(R.id.action_MainFragment_to_chatFragment, bundle)
+            } else if (state == ConnectionState.STATE_DISCONNECTED) {
+                // alert user
             }
         })
 
@@ -108,6 +112,7 @@ class MainFragment : Fragment() {
         _binding = null
     }
 
+    // this is the client side to navigate to the chat fragment
     @SuppressLint("MissingPermission")
     private fun connectDeviceAlert(device: BluetoothDevice) {
         val connectAlert = AlertDialog.Builder(context)
@@ -134,6 +139,35 @@ class MainFragment : Fragment() {
                 // do nothing, and let user choose another action
             })
         connectAlert.show()
+    }
+
+    // this is the server side to navigate to the chat fragment
+    @SuppressLint("MissingPermission")
+    private fun incomingConnectionAlert(device: BluetoothDevice) {
+        val incomingAlert = AlertDialog.Builder(context)
+
+        var identity = ""
+
+        if (!device.name.isNullOrBlank()) {
+            identity = device.name
+        } else if (!device.address.isNullOrBlank()) {
+            identity = "device with the address ${device.address}"
+        }
+
+        incomingAlert.setTitle(getString(R.string.incoming_connection_alert_title))
+        incomingAlert.setMessage("Do you want to accept the incoming connection from $identity")
+        incomingAlert.setPositiveButton(getString(R.string.accept_button),
+            DialogInterface.OnClickListener() { dialog, button ->
+                val bundle = Bundle()
+                bundle.putBoolean("isClient", false)
+                findNavController().navigate(R.id.action_MainFragment_to_chatFragment, bundle)
+            })
+        incomingAlert.setNegativeButton(getString(R.string.cancel_button),
+            DialogInterface.OnClickListener() { dialog, button ->
+                // disconnect the device here
+                ChatServiceManager.disconnectDevice(device)
+            })
+        incomingAlert.show()
     }
 }
 

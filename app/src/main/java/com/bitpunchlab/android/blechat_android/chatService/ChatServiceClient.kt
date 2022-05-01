@@ -14,8 +14,13 @@ import com.bitpunchlab.android.blechat_android.MESSAGE_UUID
 import com.bitpunchlab.android.blechat_android.SERVICE_UUID
 import com.bitpunchlab.android.blechat_android.base.ChatServiceBase
 import com.bitpunchlab.android.blechat_android.models.MessageModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private const val TAG = "ChatServiceClient"
+private const val STANDARD_WAIT_PERIOD : Long = 5000
 
 object ChatServiceClient {
 
@@ -27,7 +32,9 @@ object ChatServiceClient {
     private var messageCharacteristic: BluetoothGattCharacteristic? = null
     private var _message = MutableLiveData<MessageModel>()
     val message get() = _message
-    private var connectedDevice: BluetoothDevice? = null
+    var connectedDevice: BluetoothDevice? = null
+    var disconnectedDevice: BluetoothDevice? = null
+    private lateinit var coroutineScope: CoroutineScope
 
     private var gattClientCallback = object : BluetoothGattCallback() {
 
@@ -49,6 +56,7 @@ object ChatServiceClient {
                     gatt.close()
                     connectionState.postValue(ConnectionState.STATE_DISCONNECTED)
                     connectedDevice = null
+                    //disconnectedDevice = device
                 } else {
                     Log.i(TAG, "client callback: else case")
                     connectionState.postValue(ConnectionState.STATE_DISCONNECTED)
@@ -125,6 +133,26 @@ object ChatServiceClient {
         // or not succeed, we'll remove the connectedDevice
         connectedDevice = device
         gattClient = device.connectGatt(app, false, gattClientCallback)
+    }
+
+    @SuppressLint("MissingPermission")
+    fun disconnectDevice(device: BluetoothDevice) {
+        coroutineScope = CoroutineScope(Dispatchers.Default)
+        Log.i(TAG, "server disconnect the client's device")
+        if (connectionState.value == ConnectionState.STATE_CONNECTED &&
+            gattClient != null) {
+            gattClient!!.apply {
+                // we'll wait for a while after performing disconnect,
+                // in order to receive the disconnected state change
+                disconnect()
+                coroutineScope.launch {
+                    delay(STANDARD_WAIT_PERIOD)
+                    close()
+                }
+            }
+            connectionState.value = ConnectionState.STATE_DISCONNECTED
+            connectedDevice = null
+        }
     }
 
     @SuppressLint("MissingPermission")

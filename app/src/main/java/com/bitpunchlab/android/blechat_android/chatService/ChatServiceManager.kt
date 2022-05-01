@@ -30,7 +30,8 @@ object ChatServiceManager {
     private var advertiseSettings: AdvertiseSettings = buildAdvertiseSettings()
     private var advertiseData: AdvertiseData = buildAdvertiseData()
     var connectionState = MutableLiveData<ConnectionState>(ConnectionState.STATE_NONE)
-    private var connectedDevice: BluetoothDevice? = null
+    var connectedDevice: BluetoothDevice? = null
+    var disconnectedDevice: BluetoothDevice? = null
     var isServerRunning = MutableLiveData<Boolean>(false)
     private var _message = MutableLiveData<MessageModel>()
     val message get() = _message
@@ -45,6 +46,12 @@ object ChatServiceManager {
             if (statusSuccess && stateConnected) {
                 connectionState.postValue(ConnectionState.STATE_CONNECTED)
                 connectedDevice = device
+            } else if (newState == BluetoothGatt.STATE_DISCONNECTED) {
+                // we save the disconnected device info here
+                // that we just disconnected with this device
+                disconnectedDevice = device
+                // here we call the method to clear the resource
+                disconnectDevice(device!!)
             }
         }
 
@@ -185,6 +192,22 @@ object ChatServiceManager {
     private fun stopAdvertising() {
         advertiser?.stopAdvertising(advertiseCallback)
         advertiseCallback = null
+    }
+
+    // this method is also used to clear gatt and services
+    @SuppressLint("MissingPermission")
+    fun disconnectDevice(device: BluetoothDevice) {
+        Log.i(TAG, "server disconnect the client's device")
+        //if (connectionState.value == ConnectionState.STATE_CONNECTED &&
+        //        gattServer != null) {
+            gattServer!!.apply {
+                // we'll look into how to better disconnect the device.
+                clearServices()
+                close()
+            }
+            connectionState.value = ConnectionState.STATE_DISCONNECTED
+            connectedDevice = null
+        //}
     }
 
     // server send message to client by writing on characteristic, then
