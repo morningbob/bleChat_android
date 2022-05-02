@@ -32,6 +32,7 @@ class DeviceViewModel(application: Application) : AndroidViewModel(application) 
     private var deviceScanCallback = DeviceScanCallback()
     //private lateinit var deviceRespository: DeviceRepository
     private var messageRepository: MessageRepository
+    var connectingDevice: BluetoothDevice? = null
 
     var _deviceList = MutableLiveData<List<BluetoothDevice>>(emptyList())
     val deviceList : LiveData<List<BluetoothDevice>> get() = _deviceList
@@ -110,6 +111,7 @@ class DeviceViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun connectToDevice(device: BluetoothDevice) {
+        connectingDevice = device
         ChatServiceClient.connectToDevice(device, getApplication<Application>())
     }
 
@@ -135,10 +137,6 @@ class DeviceViewModel(application: Application) : AndroidViewModel(application) 
             super.onScanFailed(errorCode)
             Log.i(TAG, "scan error: $errorCode")
         }
-    }
-
-    fun getDeviceMessages(deviceAddress: String) : LiveData<List<MessageModel>> {
-
     }
 }
 

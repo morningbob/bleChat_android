@@ -36,5 +36,12 @@
             android:name="isClient"
             app:argType="boolean"
             android:defaultValue="false" />
+        <argument android:name="deviceName"
+            app:argType="string"
+            app:nullable="true" />
+        <argument
+            android:name="deviceAddress"
+            app:argType="string"
+            app:nullable="true" />
     </fragment>
 </navigation>

@@ -1,6 +1,7 @@
 package com.bitpunchlab.android.blechat_android.messages
 
 import android.app.Application
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -13,6 +14,7 @@ class MessageViewModel(val database: BLEDatabase) : ViewModel() {
     private var _messageList = MutableLiveData<List<MessageModel>>(emptyList())
     val messageList get() = _messageList
     private var messageRepository: MessageRepository = MessageRepository(database)
+    lateinit var messages : LiveData<List<MessageModel>>
 
     fun addMessage(msgModel: MessageModel) {
         var list = messageList.value //
@@ -26,6 +28,10 @@ class MessageViewModel(val database: BLEDatabase) : ViewModel() {
 
     init {
         //val database = BLEDatabase.getInstance(application.baseContext)
+    }
+
+    fun getDeviceMessages(deviceAddress: String)  {
+        messages = database.messageDAO.getDeviceMessages(deviceAddress)
     }
 }
 

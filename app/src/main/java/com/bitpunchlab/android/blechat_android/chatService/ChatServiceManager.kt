@@ -205,8 +205,13 @@ object ChatServiceManager {
                 clearServices()
                 close()
             }
-            connectionState.value = ConnectionState.STATE_DISCONNECTED
+            // when we close the gattServer, the connected device will
+            // certainly be disconnected no matter what, so we change the
+            // state here
+            disconnectedDevice = device
+            connectionState.postValue(ConnectionState.STATE_DISCONNECTED)
             connectedDevice = null
+
         //}
     }
 

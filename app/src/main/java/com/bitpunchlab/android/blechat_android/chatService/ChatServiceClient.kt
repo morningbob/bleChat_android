@@ -150,8 +150,10 @@ object ChatServiceClient {
                     close()
                 }
             }
+            disconnectedDevice = device
             connectionState.value = ConnectionState.STATE_DISCONNECTED
             connectedDevice = null
+
         }
     }
 

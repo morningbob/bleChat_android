@@ -32,5 +32,7 @@
     <string name="disconnection_alert_title">Disconnection</string>
     <string name="stay_in_chat_button">Stay in Chat View</string>
     <string name="back_to_device_list_button">Back to Device List</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="messages_title">Messages</string>
 
 </resources>

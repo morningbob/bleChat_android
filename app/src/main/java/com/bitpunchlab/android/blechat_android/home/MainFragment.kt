@@ -1,4 +1,4 @@
-package com.bitpunchlab.android.blechat_android
+package com.bitpunchlab.android.blechat_android.home
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
@@ -86,9 +86,9 @@ class MainFragment : Fragment() {
                 // ask user if he accepts the incoming connection
                 incomingConnectionAlert(ChatServiceManager.connectedDevice!!)
                 // navigate to chat view
-                val bundle = Bundle()
-                bundle.putBoolean("isClient", false)
-                findNavController().navigate(R.id.action_MainFragment_to_chatFragment, bundle)
+                //val bundle = Bundle()
+                //bundle.putBoolean("isClient", false)
+                //findNavController().navigate(R.id.action_MainFragment_to_chatFragment, bundle)
             } else if (state == ConnectionState.STATE_DISCONNECTED) {
                 // alert user
             }
@@ -136,6 +136,8 @@ class MainFragment : Fragment() {
                 deviceViewModel.connectToDevice(device)
                 val bundle = Bundle()
                 bundle.putBoolean("isClient", true)
+                bundle.putString("deviceName", device.name)
+                bundle.putString("deviceAddress", device.address)
                 findNavController().navigate(R.id.action_MainFragment_to_chatFragment, bundle)
             })
         connectAlert.setNegativeButton(getString(R.string.cancel_button),
@@ -164,6 +166,9 @@ class MainFragment : Fragment() {
             DialogInterface.OnClickListener() { dialog, button ->
                 val bundle = Bundle()
                 bundle.putBoolean("isClient", false)
+                //bundle.putParcelable("device", device)
+                bundle.putString("deviceName", device.name)
+                bundle.putString("deviceAddress", device.address)
                 findNavController().navigate(R.id.action_MainFragment_to_chatFragment, bundle)
             })
         incomingAlert.setNegativeButton(getString(R.string.cancel_button),

@@ -1,4 +1,4 @@
-package com.bitpunchlab.android.blechat_android
+package com.bitpunchlab.android.blechat_android.home
 
 import android.app.Activity
 import android.app.AlertDialog
@@ -22,6 +22,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
+import com.bitpunchlab.android.blechat_android.R
 
 
 private const val TAG = "PermissionFragment"
