@@ -15,12 +15,14 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.bitpunchlab.android.blechat_android.chatService.ChatServiceClient
 import com.bitpunchlab.android.blechat_android.chatService.ChatServiceManager
+import com.bitpunchlab.android.blechat_android.database.BLEDatabase
 import com.bitpunchlab.android.blechat_android.databinding.FragmentMainBinding
 import com.bitpunchlab.android.blechat_android.deviceList.DeviceListAdapter
 import com.bitpunchlab.android.blechat_android.deviceList.DeviceListener
 import com.bitpunchlab.android.blechat_android.deviceList.DeviceViewModel
 import com.bitpunchlab.android.blechat_android.deviceList.DeviceViewModelFactory
 import com.bitpunchlab.android.blechat_android.models.MessageModel
+import kotlinx.coroutines.InternalCoroutinesApi
 
 private const val TAG = "MainFragment"
 
@@ -31,9 +33,10 @@ class MainFragment : Fragment() {
     private lateinit var deviceAdapter: DeviceListAdapter
     private lateinit var deviceViewModel: DeviceViewModel
     private var connectDevice: BluetoothDevice? = null
-    //private var messageList: List<MessageModel>
+    private lateinit var database: BLEDatabase
     //private var bluetoothAdapter: BluetoothAdapter? = null
 
+    @OptIn(InternalCoroutinesApi::class)
     @SuppressLint("MissingPermission")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -41,6 +44,7 @@ class MainFragment : Fragment() {
     ): View? {
 
         _binding = FragmentMainBinding.inflate(inflater, container, false)
+        database = BLEDatabase.getInstance(context)
 
         deviceViewModel = ViewModelProvider(requireActivity(),
             DeviceViewModelFactory(requireActivity().application))

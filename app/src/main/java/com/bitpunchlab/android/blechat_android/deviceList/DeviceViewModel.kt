@@ -12,12 +12,16 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.*
 import com.bitpunchlab.android.blechat_android.chatService.ChatServiceClient
+import com.bitpunchlab.android.blechat_android.database.BLEDatabase
+import com.bitpunchlab.android.blechat_android.messages.MessageRepository
+import com.bitpunchlab.android.blechat_android.models.MessageModel
 import kotlinx.coroutines.*
 
 private const val TAG = "DeviceViewModel"
 
 // we do the scanning in the device view model because the information got will
 // be saved there.  I want the info to persist too.
+@OptIn(InternalCoroutinesApi::class)
 class DeviceViewModel(application: Application) : AndroidViewModel(application) {
 
     private var bluetoothAdapter: BluetoothAdapter
@@ -26,14 +30,15 @@ class DeviceViewModel(application: Application) : AndroidViewModel(application) 
     private var scanning = MutableLiveData<Boolean>(false)
     private var coroutineScope: CoroutineScope
     private var deviceScanCallback = DeviceScanCallback()
+    //private lateinit var deviceRespository: DeviceRepository
+    private var messageRepository: MessageRepository
 
-    var _deviceList = MutableLiveData<List<BluetoothDevice>>()
+    var _deviceList = MutableLiveData<List<BluetoothDevice>>(emptyList())
     val deviceList : LiveData<List<BluetoothDevice>> get() = _deviceList
 
     var _chosenDevice = MutableLiveData<BluetoothDevice?>()
     val chosenDevice : LiveData<BluetoothDevice?> get() = _chosenDevice
 
-    // getApplication<Application>()
     init {
         val bluetoothManager = application.getSystemService(Context.BLUETOOTH_SERVICE)
                 as BluetoothManager
@@ -41,7 +46,11 @@ class DeviceViewModel(application: Application) : AndroidViewModel(application) 
         Log.i(TAG, "just got adapter")
         bleScanner = bluetoothAdapter.bluetoothLeScanner
         coroutineScope = CoroutineScope(Dispatchers.Default)
-        _deviceList.value = emptyList()
+        //_deviceList.value = emptyList()
+
+        val database = BLEDatabase.getInstance(application.baseContext)
+        //deviceRespository = DeviceRepository(database)
+        messageRepository = MessageRepository(database)
     }
 
     fun onDeviceClicked(device: BluetoothDevice) {
@@ -126,6 +135,10 @@ class DeviceViewModel(application: Application) : AndroidViewModel(application) 
             super.onScanFailed(errorCode)
             Log.i(TAG, "scan error: $errorCode")
         }
+    }
+
+    fun getDeviceMessages(deviceAddress: String) : LiveData<List<MessageModel>> {
+
     }
 }
 

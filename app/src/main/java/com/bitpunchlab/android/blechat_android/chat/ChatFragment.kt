@@ -17,9 +17,12 @@ import com.bitpunchlab.android.blechat_android.ConnectionState
 import com.bitpunchlab.android.blechat_android.R
 import com.bitpunchlab.android.blechat_android.chatService.ChatServiceClient
 import com.bitpunchlab.android.blechat_android.chatService.ChatServiceManager
+import com.bitpunchlab.android.blechat_android.database.BLEDatabase
 import com.bitpunchlab.android.blechat_android.databinding.FragmentChatBinding
 import com.bitpunchlab.android.blechat_android.messages.MessageListAdapter
 import com.bitpunchlab.android.blechat_android.messages.MessageViewModel
+import com.bitpunchlab.android.blechat_android.messages.MessageViewModelFactory
+import kotlinx.coroutines.InternalCoroutinesApi
 
 private const val TAG = "ChatFragment"
 
@@ -30,21 +33,26 @@ class ChatFragment : Fragment() {
     private var isClient = false
     private lateinit var messageViewModel: MessageViewModel
     private lateinit var messageAdapter: MessageListAdapter
+    private lateinit var database: BLEDatabase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
     }
 
+    @OptIn(InternalCoroutinesApi::class)
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentChatBinding.inflate(inflater, container, false)
+        database = BLEDatabase.getInstance(context)
 
         isClient = requireArguments().getBoolean("isClient")
 
-        messageViewModel = ViewModelProvider(requireActivity()).get(MessageViewModel::class.java)
+        messageViewModel = ViewModelProvider(requireActivity(), MessageViewModelFactory(database))
+            .get(MessageViewModel::class.java)
+
         messageAdapter = MessageListAdapter()
         binding.messageRecycler.adapter = messageAdapter
 
@@ -74,7 +82,7 @@ class ChatFragment : Fragment() {
             if (state == ConnectionState.STATE_DISCONNECTED) {
                 // alert user of the disconnection
                 //if (!isClient) {
-                    disconnectionAlert(ChatServiceManager.connectedDevice!!)
+                    disconnectionAlert(ChatServiceManager.disconnectedDevice!!)
                 //} else {
                     //disconnectionAlert(ChatServiceClient.connectedDevice!!)
                 //}
@@ -83,7 +91,7 @@ class ChatFragment : Fragment() {
 
         ChatServiceClient.connectionState.observe(viewLifecycleOwner, Observer { state ->
             if (state == ConnectionState.STATE_DISCONNECTED) {
-                disconnectionAlert(ChatServiceClient.connectedDevice!!)
+                disconnectionAlert(ChatServiceClient.disconnectedDevice!!)
             }
         })
 
@@ -122,8 +130,14 @@ class ChatFragment : Fragment() {
 
         disconnectAlert.setTitle(getString(R.string.disconnection_alert_title))
         disconnectAlert.setMessage("Disconnected with $identity")
-        disconnectAlert.setPositiveButton(getString(R.string.ok_button),
+        disconnectAlert.setPositiveButton(getString(R.string.back_to_device_list_button),
             DialogInterface.OnClickListener() { dialog, button ->
+                // pop this fragment
+                findNavController().popBackStack()
+            })
+        disconnectAlert.setNegativeButton(getString(R.string.stay_in_chat_button),
+            DialogInterface.OnClickListener() { dialog, button ->
+                // do nothing, wait for user's next action
 
             })
 
