@@ -90,6 +90,7 @@ class ChatFragment : Fragment() {
         messageViewModel.messageList.observe(viewLifecycleOwner, Observer { messageList ->
             messageList.isNullOrEmpty().let {
                 // submit list
+                Log.i(TAG, "observed message list changed")
                 messageAdapter.submitList(messageList)
                 messageAdapter.notifyDataSetChanged()
             }

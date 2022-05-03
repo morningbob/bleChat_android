@@ -38,8 +38,12 @@
         <include
             android:id="@+id/message_layout"
             android:layout_height="0dp"
-            android:layout_width="match_parent"
-            layout="@layout/message_list" />
+            android:layout_width="0dp"
+            layout="@layout/message_list"
+            app:layout_constraintBottom_toTopOf="@+id/textView"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView2"/>
 
         <TextView
             android:id="@+id/textView2"

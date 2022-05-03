@@ -14,7 +14,7 @@ class MessageViewModel(val database: BLEDatabase) : ViewModel() {
     private var _messageList = MutableLiveData<List<MessageModel>>(emptyList())
     val messageList get() = _messageList
     private var messageRepository: MessageRepository = MessageRepository(database)
-    lateinit var messages : LiveData<List<MessageModel>>
+    lateinit var messageRecordList : LiveData<List<MessageModel>>
 
     fun addMessage(msgModel: MessageModel) {
         var list = messageList.value
@@ -31,7 +31,7 @@ class MessageViewModel(val database: BLEDatabase) : ViewModel() {
     }
 
     fun getDeviceMessages(deviceAddress: String)  {
-        messages = database.messageDAO.getDeviceMessages(deviceAddress)
+        messageRecordList = database.messageDAO.getDeviceMessages(deviceAddress)
     }
 }
 
