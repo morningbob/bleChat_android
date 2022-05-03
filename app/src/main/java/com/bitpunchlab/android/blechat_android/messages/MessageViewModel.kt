@@ -17,7 +17,7 @@ class MessageViewModel(val database: BLEDatabase) : ViewModel() {
     lateinit var messages : LiveData<List<MessageModel>>
 
     fun addMessage(msgModel: MessageModel) {
-        var list = messageList.value //
+        var list = messageList.value
         if (list!!.isNotEmpty()) {
             (list as MutableList<MessageModel>).add(msgModel)
         } else {

@@ -23,18 +23,11 @@
             android:textSize="15sp"
             android:text="@string/messages_title" />
 
-        <LinearLayout
+        <include
+            android:id="@+id/message_layout"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical" >
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/message_recycler"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                />
-        </LinearLayout>
+            android:layout_height="0dp"
+            layout="@layout/message_list" />
 
     </LinearLayout>
 </layout>

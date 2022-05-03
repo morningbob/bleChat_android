@@ -17,6 +17,7 @@ import com.bitpunchlab.android.blechat_android.chatService.ChatServiceClient
 import com.bitpunchlab.android.blechat_android.chatService.ChatServiceManager
 import com.bitpunchlab.android.blechat_android.database.BLEDatabase
 import com.bitpunchlab.android.blechat_android.databinding.FragmentChatBinding
+import com.bitpunchlab.android.blechat_android.databinding.MessageListBinding
 import com.bitpunchlab.android.blechat_android.deviceList.DeviceRepository
 import com.bitpunchlab.android.blechat_android.deviceList.DeviceViewModel
 import com.bitpunchlab.android.blechat_android.deviceList.DeviceViewModelFactory
@@ -43,6 +44,7 @@ class ChatFragment : Fragment() {
     private lateinit var messageRepository: MessageRepository
     private var deviceName: String? = null
     private var deviceAddress: String? = null
+    private var messageBinding: MessageListBinding? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,6 +59,7 @@ class ChatFragment : Fragment() {
     ): View? {
         setHasOptionsMenu(true)
         _binding = FragmentChatBinding.inflate(inflater, container, false)
+        messageBinding = binding.messageLayout
         database = BLEDatabase.getInstance(context)
         deviceRepository = DeviceRepository(database)
         messageRepository = MessageRepository(database)
@@ -82,7 +85,7 @@ class ChatFragment : Fragment() {
         }
 
         messageAdapter = MessageListAdapter()
-        binding.messageRecycler.adapter = messageAdapter
+        messageBinding!!.messageRecycler.adapter = messageAdapter
 
         messageViewModel.messageList.observe(viewLifecycleOwner, Observer { messageList ->
             messageList.isNullOrEmpty().let {

@@ -1,4 +1,4 @@
-package com.bitpunchlab.android.blechat_android.home
+package com.bitpunchlab.android.blechat_android
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
@@ -13,9 +13,12 @@ import android.view.ViewGroup
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
+import com.bitpunchlab.android.blechat_android.ConnectionState
+import com.bitpunchlab.android.blechat_android.R
 import com.bitpunchlab.android.blechat_android.chatService.ChatServiceClient
 import com.bitpunchlab.android.blechat_android.chatService.ChatServiceManager
 import com.bitpunchlab.android.blechat_android.database.BLEDatabase
+import com.bitpunchlab.android.blechat_android.databinding.DeviceListBinding
 import com.bitpunchlab.android.blechat_android.databinding.FragmentMainBinding
 import com.bitpunchlab.android.blechat_android.deviceList.DeviceListAdapter
 import com.bitpunchlab.android.blechat_android.deviceList.DeviceListener
@@ -34,6 +37,7 @@ class MainFragment : Fragment() {
     private lateinit var deviceViewModel: DeviceViewModel
     private var connectDevice: BluetoothDevice? = null
     private lateinit var database: BLEDatabase
+    private var deviceBinding: DeviceListBinding? = null
     //private var bluetoothAdapter: BluetoothAdapter? = null
 
     @OptIn(InternalCoroutinesApi::class)
@@ -44,6 +48,8 @@ class MainFragment : Fragment() {
     ): View? {
 
         _binding = FragmentMainBinding.inflate(inflater, container, false)
+        deviceBinding = binding.deviceLayout
+
         database = BLEDatabase.getInstance(context)
 
         deviceViewModel = ViewModelProvider(requireActivity(),
@@ -57,7 +63,7 @@ class MainFragment : Fragment() {
             connectDeviceAlert(device)
         })
 
-        binding.devicesRecycler.adapter = deviceAdapter
+        deviceBinding!!.devicesRecycler.adapter = deviceAdapter
 
         deviceViewModel.deviceList.observe(viewLifecycleOwner, Observer { deviceList ->
             if (!deviceList.isNullOrEmpty()) {

@@ -1,4 +1,4 @@
-package com.bitpunchlab.android.blechat_android.home
+package com.bitpunchlab.android.blechat_android
 
 import android.app.Activity
 import android.app.AlertDialog
