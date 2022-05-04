@@ -8,8 +8,7 @@ import kotlinx.android.parcel.Parcelize
 @Entity(tableName = "device_table")
 @Parcelize
 data class DeviceModel (
-    @PrimaryKey(autoGenerate = true) var id: Int = 0,
-    var address: String,
+    @PrimaryKey var address: String,
     var name: String?
     ) : Parcelable
 

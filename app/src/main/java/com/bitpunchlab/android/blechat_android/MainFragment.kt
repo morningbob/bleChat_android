@@ -6,13 +6,13 @@ import android.bluetooth.BluetoothDevice
 import android.content.DialogInterface
 import android.os.Bundle
 import android.util.Log
+import android.view.*
 import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.ui.NavigationUI
 import com.bitpunchlab.android.blechat_android.ConnectionState
 import com.bitpunchlab.android.blechat_android.R
 import com.bitpunchlab.android.blechat_android.chatService.ChatServiceClient
@@ -47,6 +47,7 @@ class MainFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
 
+        setHasOptionsMenu(true)
         _binding = FragmentMainBinding.inflate(inflater, container, false)
         deviceBinding = binding.deviceLayout
 
@@ -114,12 +115,23 @@ class MainFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        deviceBinding = null
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.menu_main, menu)
+        super.onCreateOptionsMenu(menu, inflater)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return NavigationUI.onNavDestinationSelected(item,
+            requireView().findNavController())
+                || super.onOptionsItemSelected(item)
     }
 
     // this is the client side to navigate to the chat fragment

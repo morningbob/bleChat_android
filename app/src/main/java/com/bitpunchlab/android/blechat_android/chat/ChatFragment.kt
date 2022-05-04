@@ -147,6 +147,7 @@ class ChatFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        messageBinding = null
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -183,8 +184,10 @@ class ChatFragment : Fragment() {
     // we save the device in the database only if it has messages.
     @SuppressLint("MissingPermission")
     private fun createAndSaveDevice(deviceName: String?, deviceAddress: String) {
+        Log.i(TAG, "create and save device ran")
         val deviceModel = DeviceModel(name = deviceName, address = deviceAddress)
         deviceRepository.saveDevice(deviceModel)
+        Log.i(TAG, "device saved")
     }
 
     private fun saveMessage(message: MessageModel) {

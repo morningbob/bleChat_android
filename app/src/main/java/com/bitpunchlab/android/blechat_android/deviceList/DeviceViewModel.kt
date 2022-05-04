@@ -14,6 +14,7 @@ import androidx.lifecycle.*
 import com.bitpunchlab.android.blechat_android.chatService.ChatServiceClient
 import com.bitpunchlab.android.blechat_android.database.BLEDatabase
 import com.bitpunchlab.android.blechat_android.messages.MessageRepository
+import com.bitpunchlab.android.blechat_android.models.DeviceModel
 import com.bitpunchlab.android.blechat_android.models.MessageModel
 import kotlinx.coroutines.*
 
@@ -32,13 +33,19 @@ class DeviceViewModel(application: Application) : AndroidViewModel(application) 
     private var deviceScanCallback = DeviceScanCallback()
     //private lateinit var deviceRespository: DeviceRepository
     private var messageRepository: MessageRepository
+    private var deviceRespository: DeviceRepository
     var connectingDevice: BluetoothDevice? = null
+    lateinit var recordedDeviceList : LiveData<List<DeviceModel>>
+    lateinit var database: BLEDatabase
 
-    var _deviceList = MutableLiveData<List<BluetoothDevice>>(emptyList())
+    private var _deviceList = MutableLiveData<List<BluetoothDevice>>(emptyList())
     val deviceList : LiveData<List<BluetoothDevice>> get() = _deviceList
 
-    var _chosenDevice = MutableLiveData<BluetoothDevice?>()
+    private var _chosenDevice = MutableLiveData<BluetoothDevice?>()
     val chosenDevice : LiveData<BluetoothDevice?> get() = _chosenDevice
+
+    private var _chosenModel = MutableLiveData<DeviceModel?>()
+    val chosenModel get() = _chosenModel
 
     init {
         val bluetoothManager = application.getSystemService(Context.BLUETOOTH_SERVICE)
@@ -49,8 +56,8 @@ class DeviceViewModel(application: Application) : AndroidViewModel(application) 
         coroutineScope = CoroutineScope(Dispatchers.Default)
         //_deviceList.value = emptyList()
 
-        val database = BLEDatabase.getInstance(application.baseContext)
-        //deviceRespository = DeviceRepository(database)
+        database = BLEDatabase.getInstance(application.baseContext)
+        deviceRespository = DeviceRepository(database)
         messageRepository = MessageRepository(database)
     }
 
@@ -60,6 +67,19 @@ class DeviceViewModel(application: Application) : AndroidViewModel(application) 
 
     fun finishNavigationOfDevice() {
         _chosenDevice.value = null
+    }
+
+    fun onModelClicked(device: DeviceModel) {
+        _chosenModel.value = device
+    }
+
+    fun finishNavigationOfDeviceModel() {
+        _chosenModel.value = null
+    }
+
+    fun getRecordedDevices() {
+        recordedDeviceList = deviceRespository.getAllDevices()
+        //Log.i(TAG, "device view model: recorded devices count ${recordedDeviceList.value?.size}")
     }
 
     // we need to add to the list in this way, we can't add to mutable live data list directly

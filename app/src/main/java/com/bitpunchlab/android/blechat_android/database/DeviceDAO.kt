@@ -13,6 +13,9 @@ interface DeviceDAO {
     @Query("SELECT * FROM device_table WHERE :deviceAddress == address")
     fun getDevice(deviceAddress: String) : LiveData<List<DeviceModel>>
 
+    @Query("SELECT * FROM device_table")
+    fun getAllDevices() : LiveData<List<DeviceModel>>
+
     @Delete
     fun delete(device: DeviceModel)
 }

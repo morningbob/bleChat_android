@@ -31,7 +31,7 @@ class MessageViewModel(val database: BLEDatabase) : ViewModel() {
     }
 
     fun getDeviceMessages(deviceAddress: String)  {
-        messageRecordList = database.messageDAO.getDeviceMessages(deviceAddress)
+        messageRecordList = messageRepository.getDeviceMessages(deviceAddress)
     }
 }
 

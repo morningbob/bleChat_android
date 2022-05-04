@@ -17,6 +17,9 @@
         <action
             android:id="@+id/action_MainFragment_to_chatFragment"
             app:destination="@id/chatFragment" />
+        <action
+            android:id="@+id/action_MainFragment_to_deviceSelectionFragment"
+            app:destination="@id/deviceSelectionFragment" />
     </fragment>
     <fragment
         android:id="@+id/PermissionFragment"
@@ -39,6 +42,23 @@
         <argument android:name="deviceName"
             app:argType="string"
             app:nullable="true" />
+        <argument
+            android:name="deviceAddress"
+            app:argType="string"
+            app:nullable="true" />
+    </fragment>
+    <fragment
+        android:id="@+id/deviceSelectionFragment"
+        android:name="com.bitpunchlab.android.blechat_android.chatRecords.DeviceSelectionFragment"
+        android:label="DeviceSelectionFragment" >
+        <action
+            android:id="@+id/action_deviceSelectionFragment_to_chatRecordFragment"
+            app:destination="@id/chatRecordFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/chatRecordFragment"
+        android:name="com.bitpunchlab.android.blechat_android.chatRecords.ChatRecordFragment"
+        android:label="ChatRecordFragment" >
         <argument
             android:name="deviceAddress"
             app:argType="string"

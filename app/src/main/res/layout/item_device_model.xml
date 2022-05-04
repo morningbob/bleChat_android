@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <data>
+        <variable
+            name="deviceModel"
+            type="com.bitpunchlab.android.blechat_android.models.DeviceModel" />
+        <variable
+            name="onClickListener"
+            type="com.bitpunchlab.android.blechat_android.deviceList.DeviceModelListener" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8sp"
+        android:orientation="vertical"
+        android:onClick="@{()-> onClickListener.onClick(deviceModel)}">
+
+        <!--
+                <TextView
+                        android:id="@+id/deviceNameTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="12sp"
+                        android:text="@string/deviceNameTitle" />
+        -->
+        <TextView
+            android:id="@+id/deviceName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8sp"
+            android:layout_marginRight="8sp"
+            android:layout_marginTop="8sp"
+            android:textSize="17sp"
+            android:text="@{deviceModel.name}" />
+
+        <TextView
+            android:id="@+id/deviceAddress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8sp"
+            android:layout_marginRight="8sp"
+            android:layout_marginTop="5sp"
+            android:textSize="17sp"
+            android:text="@{deviceModel.address}" />
+
+    </LinearLayout>
+
+</layout>

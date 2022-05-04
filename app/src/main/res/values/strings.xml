@@ -34,5 +34,6 @@
     <string name="back_to_device_list_button">Back to Device List</string>
     <string name="disconnect">Disconnect</string>
     <string name="messages_title">Messages</string>
+    <string name="chat_records">Chat Records</string>
 
 </resources>
