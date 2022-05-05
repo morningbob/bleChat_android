@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.bluetooth.BluetoothDevice
 import android.content.DialogInterface
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.*
@@ -13,6 +14,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.bitpunchlab.android.blechat_android.ConnectionState
 import com.bitpunchlab.android.blechat_android.R
+import com.bitpunchlab.android.blechat_android.START_MESSAGE_NOTIFICATION
+import com.bitpunchlab.android.blechat_android.chatNotification.MessageAlertService
 import com.bitpunchlab.android.blechat_android.chatService.ChatServiceClient
 import com.bitpunchlab.android.blechat_android.chatService.ChatServiceManager
 import com.bitpunchlab.android.blechat_android.database.BLEDatabase
@@ -63,6 +66,7 @@ class ChatFragment : Fragment() {
         database = BLEDatabase.getInstance(context)
         deviceRepository = DeviceRepository(database)
         messageRepository = MessageRepository(database)
+        //startMessageNotification()
 
         deviceViewModel = ViewModelProvider(requireActivity(),
             DeviceViewModelFactory(requireActivity().application))
@@ -99,15 +103,29 @@ class ChatFragment : Fragment() {
         ChatServiceManager.message.observe(viewLifecycleOwner, Observer { msg ->
             msg?.let {
                 Log.i(TAG, "observed message from manager")
+                // we start the notification with the content of the message
+
+                saveMessage(msg)
                 messageViewModel.addMessage(msg)
+                if (msg.deviceName != "You") {
+                    startMessageNotification(msg.content)
+                }
             }
         })
 
         ChatServiceClient.message.observe(viewLifecycleOwner, Observer { msg ->
             msg?.let {
                 Log.i(TAG, "observed message from client")
+                // we start the notification with the content of the message
+                // "You" identifies the messages are from device, or just messages
+                // the user sent.  We only send notification when receive message from
+                // the other device.
+
                 saveMessage(msg)
                 messageViewModel.addMessage(msg)
+                if (msg.deviceName != "You") {
+                    startMessageNotification(msg.content)
+                }
             }
         })
 
@@ -221,5 +239,13 @@ class ChatFragment : Fragment() {
             })
 
         disconnectAlert.show()
+    }
+
+    private fun startMessageNotification(message: String) {
+        val intent = Intent(requireContext(), MessageAlertService::class.java)
+        intent.action = START_MESSAGE_NOTIFICATION
+        intent.putExtra("message", message)
+        requireContext().startService(intent)
+        Log.i(TAG, "started notification service")
     }
 }

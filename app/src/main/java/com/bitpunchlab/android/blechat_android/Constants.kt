@@ -14,3 +14,6 @@ enum class ConnectionState {
     STATE_CONNECTED,
     STATE_DISCONNECTED
 }
+
+val START_MESSAGE_NOTIFICATION = "StartMessageNotification"
+val STOP_MESSAGE_NOTIFICATION = "StopMessageNotification"

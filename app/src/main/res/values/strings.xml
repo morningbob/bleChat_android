@@ -35,5 +35,8 @@
     <string name="disconnect">Disconnect</string>
     <string name="messages_title">Messages</string>
     <string name="chat_records">Chat Records</string>
+    <string name="channel_id">BLEChat_Notice</string>
+    <string name="notification_description">new message!</string>
+    <string name="channel_name">Chat Service</string>
 
 </resources>
