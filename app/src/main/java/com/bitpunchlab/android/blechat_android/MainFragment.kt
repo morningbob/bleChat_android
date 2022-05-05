@@ -83,6 +83,9 @@ class MainFragment : Fragment() {
         ChatServiceManager.isServerRunning.observe(viewLifecycleOwner, Observer { value ->
             if (value == null || value == false) {
                 binding.startServerButton.text = getString(R.string.start_server)
+                // here we also ask if the user wants to start a server to listen to the
+                // incoming connections
+                startServerAlert()
             } else {
                 binding.startServerButton.text = getString(R.string.stop_server)
             }
@@ -145,7 +148,7 @@ class MainFragment : Fragment() {
         } else if (!device.address.isNullOrBlank()) {
             identity = "device with the address ${device.address}"
         }
-
+        connectAlert.setCancelable(false)
         connectAlert.setTitle(getString(R.string.connect_device_alert_title))
         connectAlert.setMessage("Do you want to connect to ${identity}")
         connectAlert.setPositiveButton(getString(R.string.confirm_button),
@@ -177,7 +180,7 @@ class MainFragment : Fragment() {
         } else if (!device.address.isNullOrBlank()) {
             identity = "device with the address ${device.address}"
         }
-
+        incomingAlert.setCancelable(false)
         incomingAlert.setTitle(getString(R.string.incoming_connection_alert_title))
         incomingAlert.setMessage("Do you want to accept the incoming connection from $identity")
         incomingAlert.setPositiveButton(getString(R.string.accept_button),
@@ -195,6 +198,24 @@ class MainFragment : Fragment() {
                 ChatServiceManager.disconnectDevice(device)
             })
         incomingAlert.show()
+    }
+
+    private fun startServerAlert() {
+        val startAlert = AlertDialog.Builder(context)
+
+        startAlert.setTitle(getString(R.string.start_server_alert_title))
+        startAlert.setMessage(getString(R.string.start_server_alert_desc))
+        startAlert.setPositiveButton(getString(R.string.start_button),
+            DialogInterface.OnClickListener() { dialog, button ->
+                // start the chat service manager
+                ChatServiceManager.startChatServer(requireActivity().application)
+                dialog.dismiss()
+            })
+        startAlert.setNegativeButton(getString(R.string.cancel_button),
+            DialogInterface.OnClickListener() { dialog, button ->
+                // do nothing, wait for user's action
+            })
+        startAlert.show()
     }
 }
 

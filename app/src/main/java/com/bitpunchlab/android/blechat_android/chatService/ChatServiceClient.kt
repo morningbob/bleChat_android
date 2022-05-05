@@ -25,8 +25,8 @@ private const val STANDARD_WAIT_PERIOD : Long = 5000
 object ChatServiceClient {
 
     private var app: Application? = null
-    private lateinit var bluetoothAdapter: BluetoothAdapter
-    private lateinit var bluetoothManager: BluetoothManager
+    //private lateinit var bluetoothAdapter: BluetoothAdapter
+    //private lateinit var bluetoothManager: BluetoothManager
     private var gattClient: BluetoothGatt? = null
     var connectionState = MutableLiveData<ConnectionState>(ConnectionState.STATE_NONE)
     private var messageCharacteristic: BluetoothGattCharacteristic? = null

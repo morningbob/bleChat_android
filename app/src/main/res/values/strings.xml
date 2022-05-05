@@ -38,5 +38,8 @@
     <string name="channel_id">BLEChat_Notice</string>
     <string name="notification_description">new message!</string>
     <string name="channel_name">Chat Service</string>
+    <string name="start_server_alert_title">Start Server</string>
+    <string name="start_server_alert_desc">Do you want to start the chat server to listen to incoming connections?</string>
+    <string name="start_button">Start</string>
 
 </resources>

@@ -16,8 +16,12 @@ import com.bitpunchlab.android.blechat_android.DESCRIPTOR_MESSAGE_UUID
 import com.bitpunchlab.android.blechat_android.MESSAGE_UUID
 import com.bitpunchlab.android.blechat_android.SERVICE_UUID
 import com.bitpunchlab.android.blechat_android.models.MessageModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private const val TAG = "ChatServiceManager"
+private const val RESTART_WAIT_PERIOD : Long = 7000
 
 object ChatServiceManager {
 
@@ -35,6 +39,7 @@ object ChatServiceManager {
     var isServerRunning = MutableLiveData<Boolean>(false)
     private var _message = MutableLiveData<MessageModel>()
     val message get() = _message
+    private lateinit var coroutineScope: CoroutineScope
 
     private var gattServerCallback = object : BluetoothGattServerCallback() {
         override fun onConnectionStateChange(device: BluetoothDevice?, status: Int, newState: Int) {
@@ -211,7 +216,16 @@ object ChatServiceManager {
             disconnectedDevice = device
             connectionState.postValue(ConnectionState.STATE_DISCONNECTED)
             connectedDevice = null
+        isServerRunning.postValue(false)
+        // we need to start gatt again, so it listens to incoming connections
+        coroutineScope.launch {
 
+            delay(RESTART_WAIT_PERIOD)
+            //app?.let {
+                //startChatServer(it)
+                //Log.i(TAG, "restarting chat server")
+            //}
+        }
         //}
     }
 

@@ -66,7 +66,6 @@ class ChatFragment : Fragment() {
         database = BLEDatabase.getInstance(context)
         deviceRepository = DeviceRepository(database)
         messageRepository = MessageRepository(database)
-        //startMessageNotification()
 
         deviceViewModel = ViewModelProvider(requireActivity(),
             DeviceViewModelFactory(requireActivity().application))
@@ -228,6 +227,10 @@ class ChatFragment : Fragment() {
         disconnectAlert.setMessage("Disconnected with $identity")
         disconnectAlert.setPositiveButton(getString(R.string.back_to_device_list_button),
             DialogInterface.OnClickListener() { dialog, button ->
+                // Bug: for the server, or the samsung tablet,
+                // the dialog is dimissed,  But for the client
+                // or the samsung phone, the dialog can't be
+                // dismissed.
                 dialog.dismiss()
                 // pop this fragment
                 findNavController().popBackStack()
