@@ -17,6 +17,7 @@ import com.bitpunchlab.android.blechat_android.MESSAGE_UUID
 import com.bitpunchlab.android.blechat_android.SERVICE_UUID
 import com.bitpunchlab.android.blechat_android.models.MessageModel
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -40,6 +41,7 @@ object ChatServiceManager {
     private var _message = MutableLiveData<MessageModel>()
     val message get() = _message
     private lateinit var coroutineScope: CoroutineScope
+    var isChatEnded = MutableLiveData(true)
 
     private var gattServerCallback = object : BluetoothGattServerCallback() {
         override fun onConnectionStateChange(device: BluetoothDevice?, status: Int, newState: Int) {
@@ -51,10 +53,12 @@ object ChatServiceManager {
             if (statusSuccess && stateConnected) {
                 connectionState.postValue(ConnectionState.STATE_CONNECTED)
                 connectedDevice = device
+                isChatEnded.postValue(false)
             } else if (newState == BluetoothGatt.STATE_DISCONNECTED) {
                 // we save the disconnected device info here
                 // that we just disconnected with this device
                 disconnectedDevice = device
+                isChatEnded.postValue(true)
                 // here we call the method to clear the resource
                 disconnectDevice(device!!)
             }
@@ -217,6 +221,7 @@ object ChatServiceManager {
             connectionState.postValue(ConnectionState.STATE_DISCONNECTED)
             connectedDevice = null
         isServerRunning.postValue(false)
+        coroutineScope = CoroutineScope(Dispatchers.Default)
         // we need to start gatt again, so it listens to incoming connections
         coroutineScope.launch {
 

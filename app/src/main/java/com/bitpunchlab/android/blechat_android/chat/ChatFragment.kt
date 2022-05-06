@@ -2,6 +2,7 @@ package com.bitpunchlab.android.blechat_android.chat
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.app.Dialog
 import android.bluetooth.BluetoothDevice
 import android.content.DialogInterface
 import android.content.Intent
@@ -9,6 +10,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
@@ -30,7 +32,7 @@ import com.bitpunchlab.android.blechat_android.messages.MessageViewModel
 import com.bitpunchlab.android.blechat_android.messages.MessageViewModelFactory
 import com.bitpunchlab.android.blechat_android.models.DeviceModel
 import com.bitpunchlab.android.blechat_android.models.MessageModel
-import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.*
 
 private const val TAG = "ChatFragment"
 
@@ -48,6 +50,13 @@ class ChatFragment : Fragment() {
     private var deviceName: String? = null
     private var deviceAddress: String? = null
     private var messageBinding: MessageListBinding? = null
+    private lateinit var coroutineScope: CoroutineScope
+    private var dismissDialogFinished = MutableLiveData(false)
+    private var isDisconnectedShown = false
+    private var disconnectedDevice : BluetoothDevice? = null
+    private var connectionStateHistory = ArrayList<ConnectionState>()
+    private var status = MutableLiveData<String>("")
+    //private var disconnectAlert = MutableLiveData<Dialog>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,6 +75,7 @@ class ChatFragment : Fragment() {
         database = BLEDatabase.getInstance(context)
         deviceRepository = DeviceRepository(database)
         messageRepository = MessageRepository(database)
+        coroutineScope = CoroutineScope(Dispatchers.Default)
 
         deviceViewModel = ViewModelProvider(requireActivity(),
             DeviceViewModelFactory(requireActivity().application))
@@ -132,16 +142,43 @@ class ChatFragment : Fragment() {
             if (state == ConnectionState.STATE_DISCONNECTED) {
                 // alert user of the disconnection
                 //if (!isClient) {
-                    disconnectionAlert(ChatServiceManager.disconnectedDevice!!)
-                //} else {
-                    //disconnectionAlert(ChatServiceClient.connectedDevice!!)
+                // we check if we showed the disconnection alert already before showing it again
+                //if (!isDisconnectedShown && disconnectedDevice != ChatServiceManager.disconnectedDevice) {
+                //if (connectionStateHistory.last() != null &&
+                    //connectionStateHistory.last() != ConnectionState.STATE_CONNECTED) {
+                    //disconnectionAlert(ChatServiceManager.disconnectedDevice!!)
+                    //connectionStateHistory.add(ConnectionState.STATE_DISCONNECTED)
                 //}
+                //}
+                getAppStatus(state, null)
+
+            } else if (state == ConnectionState.STATE_CONNECTED) {
+                // we record that in app state history
+                connectionStateHistory.add(ConnectionState.STATE_CONNECTED)
+                getAppStatus(state, ChatServiceManager.connectedDevice)
+            } else {
+                getAppStatus(state, null)
             }
         })
 
         ChatServiceClient.connectionState.observe(viewLifecycleOwner, Observer { state ->
+
             if (state == ConnectionState.STATE_DISCONNECTED) {
-                disconnectionAlert(ChatServiceClient.disconnectedDevice!!)
+                //if (!isDisconnectedShown && disconnectedDevice != ChatServiceManager.disconnectedDevice) {
+                //if (connectionStateHistory.last() == ConnectionState.STATE_CONNECTED) {
+                //    if (ChatServiceManager.disconnectedDevice != null) {
+                //        disconnectionAlert(ChatServiceManager.disconnectedDevice!!)
+                //    } else {
+                 //       Log.i("connection state changes", "null disconnected device")
+                 //   }
+                //}
+                getAppStatus(state, null)
+            } else if (state == ConnectionState.STATE_CONNECTED) {
+                // we record that in app state history
+                //connectionStateHistory.add(ConnectionState.STATE_CONNECTED)
+                getAppStatus(state, ChatServiceClient.connectedDevice)
+            } else {
+                getAppStatus(state, null)
             }
         })
 
@@ -157,6 +194,16 @@ class ChatFragment : Fragment() {
                 binding.messageEditText.text = null
             }
         }
+
+        dismissDialogFinished.observe(viewLifecycleOwner, Observer { dismissed ->
+            if (dismissed) {
+                findNavController().popBackStack()
+            }
+        })
+
+        status.observe(viewLifecycleOwner, Observer { appStatus ->
+            binding.stateInfo.text = appStatus
+        })
 
         return binding.root
     }
@@ -213,7 +260,7 @@ class ChatFragment : Fragment() {
 
     @SuppressLint("MissingPermission")
     private fun disconnectionAlert(device: BluetoothDevice) {
-        val disconnectAlert = AlertDialog.Builder(context)
+        var disconnectAlert = AlertDialog.Builder(context)
 
         var identity = ""
 
@@ -225,22 +272,29 @@ class ChatFragment : Fragment() {
 
         disconnectAlert.setTitle(getString(R.string.disconnection_alert_title))
         disconnectAlert.setMessage("Disconnected with $identity")
+        //dismissedDialog.value = disconnectAlert
         disconnectAlert.setPositiveButton(getString(R.string.back_to_device_list_button),
             DialogInterface.OnClickListener() { dialog, button ->
                 // Bug: for the server, or the samsung tablet,
                 // the dialog is dimissed,  But for the client
                 // or the samsung phone, the dialog can't be
                 // dismissed.
-                dialog.dismiss()
-                // pop this fragment
+                //coroutineScope.launch {
+                    dialog.dismiss()
+                //    dismissDialogFinished.postValue(true)
                 findNavController().popBackStack()
+                //findNavController().navigateUp()
+
+                //}
+                // pop this fragment
+                //findNavController().popBackStack()
             })
         disconnectAlert.setNegativeButton(getString(R.string.stay_in_chat_button),
             DialogInterface.OnClickListener() { dialog, button ->
                 // do nothing, wait for user's next action
 
             })
-
+        isDisconnectedShown = true
         disconnectAlert.show()
     }
 
@@ -250,5 +304,26 @@ class ChatFragment : Fragment() {
         intent.putExtra("message", message)
         requireContext().startService(intent)
         Log.i(TAG, "started notification service")
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun getAppStatus(state: ConnectionState, device: BluetoothDevice?)  {
+        //status = ""
+        when (state) {
+            ConnectionState.STATE_NONE -> {
+                status.value = "Waiting for your instruction..."
+            }
+            ConnectionState.STATE_CONNECTING -> {
+                status.value = "Connecting..."
+            }
+            ConnectionState.STATE_CONNECTED -> {
+                status.value = "Connected with ${device?.name ?: device?.address}"
+            }
+            ConnectionState.STATE_DISCONNECTED -> {
+                status.value = "Disconnected."
+            }
+            else -> status.value = "Waiting for you instruction..."
+        }
+        //return status
     }
 }

@@ -38,6 +38,7 @@ class MainFragment : Fragment() {
     private var connectDevice: BluetoothDevice? = null
     private lateinit var database: BLEDatabase
     private var deviceBinding: DeviceListBinding? = null
+    private var appStateHistory = ArrayList<ConnectionState>()
     //private var bluetoothAdapter: BluetoothAdapter? = null
 
     @OptIn(InternalCoroutinesApi::class)
@@ -46,6 +47,8 @@ class MainFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+
+        appStateHistory.add(ConnectionState.STATE_NONE)
 
         setHasOptionsMenu(true)
         _binding = FragmentMainBinding.inflate(inflater, container, false)
@@ -92,15 +95,25 @@ class MainFragment : Fragment() {
         })
 
         ChatServiceManager.connectionState.observe(viewLifecycleOwner, Observer { state ->
+            Log.i("connection state changed", "state: ${state}")
+            Log.i("appStateHistory, state: ", appStateHistory.last().toString())
+            // appStateHistory is used to prevent the incoming connection alert to be shown
+            // whenever the connection state is connected, sometimes
             if (state == ConnectionState.STATE_CONNECTED) {
                 // ask user if he accepts the incoming connection
-                incomingConnectionAlert(ChatServiceManager.connectedDevice!!)
-                // navigate to chat view
-                //val bundle = Bundle()
-                //bundle.putBoolean("isClient", false)
-                //findNavController().navigate(R.id.action_MainFragment_to_chatFragment, bundle)
+                if (appStateHistory.last() == ConnectionState.STATE_CONNECTING ||
+                        appStateHistory.last() == ConnectionState.STATE_NONE ||
+                        appStateHistory.last() == ConnectionState.STATE_DISCONNECTED) {
+                    incomingConnectionAlert(ChatServiceManager.connectedDevice!!)
+                }
+
             } else if (state == ConnectionState.STATE_DISCONNECTED) {
                 // alert user
+                appStateHistory.add(state)
+                Log.i("connection state", "added disconnection")
+            } else if (state == ConnectionState.STATE_CONNECTING) {
+                appStateHistory.add(state)
+                Log.i("connection state", "added connecting")
             }
         })
 
