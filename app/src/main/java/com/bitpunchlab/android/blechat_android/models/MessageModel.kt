@@ -11,5 +11,6 @@ data class MessageModel (
     @PrimaryKey(autoGenerate = true) var id: Int = 0,
     var content: String,
     var deviceAddress: String,
-    var deviceName: String?
+    var deviceName: String?,
+    var confirmCode: String
 ) : Parcelable

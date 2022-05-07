@@ -26,12 +26,15 @@ class MessageViewModel(val database: BLEDatabase) : ViewModel() {
         _messageList.value = list!!
     }
 
-    init {
-        //val database = BLEDatabase.getInstance(application.baseContext)
-    }
-
     fun getDeviceMessages(deviceAddress: String)  {
         messageRecordList = messageRepository.getDeviceMessages(deviceAddress)
+    }
+
+    fun verifyConfirmCode(code: String) {
+        //messageList.value?.subList()
+        for (i in ((messageList.value?.size?.minus(1))?.downTo(messageList.value?.size?.minus(6)!!) ?: 0) step 1) {
+            
+        }
     }
 }
 

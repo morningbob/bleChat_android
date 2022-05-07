@@ -98,7 +98,8 @@ class MainFragment : Fragment() {
             Log.i("connection state changed", "state: ${state}")
             Log.i("appStateHistory, state: ", appStateHistory.last().toString())
             // appStateHistory is used to prevent the incoming connection alert to be shown
-            // whenever the connection state is connected, sometimes
+            // whenever the connection state is connected, but this is not the behavior I
+            // want.  So, I just let the alert be shown when connecting and connected state.
             if (state == ConnectionState.STATE_CONNECTED) {
                 // ask user if he accepts the incoming connection
                 if (appStateHistory.last() == ConnectionState.STATE_CONNECTING ||
@@ -208,7 +209,14 @@ class MainFragment : Fragment() {
         incomingAlert.setNegativeButton(getString(R.string.cancel_button),
             DialogInterface.OnClickListener() { dialog, button ->
                 // disconnect the device here
-                ChatServiceManager.disconnectDevice(device)
+                //ChatServiceManager.disconnectDevice(device)
+                // we disconnect the device here, but I want to make sure that
+                // it is disconnected, I send a message to the peer device to ask it to
+                // disconnect too.
+                ChatServiceManager.sendMessage(DISCONNECTION_KEY)
+                // here I may wait for the confirmation code from the peer device before I
+                // actually perform disconnection.
+
             })
         incomingAlert.show()
     }

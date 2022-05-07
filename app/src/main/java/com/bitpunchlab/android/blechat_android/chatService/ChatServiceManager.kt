@@ -20,6 +20,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.random.Random
+
+import kotlin.random.Random.Default.nextInt
 
 private const val TAG = "ChatServiceManager"
 private const val RESTART_WAIT_PERIOD : Long = 7000
@@ -88,15 +91,39 @@ object ChatServiceManager {
             )
             Log.i(TAG, "onChar Write, getting message")
             // check if it is the target characteristic
+            var msgContent = ""
+            var confirmCode = ""
             characteristic?.let { char ->
                 if (char.uuid == MESSAGE_UUID) {
                     val msg = value?.toString(Charsets.UTF_8)
                     Log.i(TAG, "message received: $msg")
-                    val msgModel =
-                        MessageModel(content = msg.toString(),
-                        deviceAddress = device!!.address,
-                        deviceName = device?.name)
-                    _message.postValue(msgModel)
+                    // we extract the confirmation code here
+                    msg?.let {
+                        // check if it is just the confirm code, not message
+                        // if it is a confirm code, it starts with confirm898
+                        if (!msg.startsWith("confirm898", false)) {
+                            val resultList = decodeConfirmCode(msg)
+                            // we will send back the confirmation code to show that we
+                            // received the message.
+                            confirmCode = resultList[0]
+                            Log.i("confirmCode: ", confirmCode)
+                            sendMessage("confirm898${confirmCode}")
+                            Log.i("message", msgContent)
+                            msgContent = resultList[1]
+                            val msgModel =
+                                MessageModel(content = msgContent,
+                                    deviceAddress = device!!.address,
+                                    deviceName = device?.name, confirmCode = confirmCode)
+                            _message.postValue(msgModel)
+                        } else {
+                            // msg starts with confirm898
+                            // notice the app that the message the server sent is
+                            // delivered.
+                            // compare with the confirm code we generated earlier
+                            Log.i("confirm message: ", msg)
+                        }
+                    }
+
                 }
             }
         }
@@ -242,7 +269,9 @@ object ChatServiceManager {
         if (gattServer != null) {
             val service = gattServer!!.getService(SERVICE_UUID)
             val characteristic = service.getCharacteristic(MESSAGE_UUID)
-            val messageBytes = msg.toByteArray(Charsets.UTF_8)
+            val confirmCode = generateRandomConfirmCode()
+            val modifiedMessage = msg + confirmCode
+            val messageBytes = modifiedMessage.toByteArray(Charsets.UTF_8)
             characteristic.value = messageBytes
 
             // here, we notify client
@@ -251,13 +280,30 @@ object ChatServiceManager {
 
             // we need to display the message user said to the message list.
             val msgModel = MessageModel(content = msg, deviceName = "You",
-                deviceAddress = connectedDevice!!.address)
+                deviceAddress = connectedDevice!!.address, confirmCode = confirmCode)
             _message.postValue(msgModel)
         } else {
             Log.i(TAG, "can't send message.  gatt is null")
             return false
         }
         return false
+    }
+
+    private fun generateRandomConfirmCode() : String {
+        val confirmNum = Random.nextInt(10000,99999)
+        return confirmNum.toString() + "kcvx"
+    }
+
+    private fun decodeConfirmCode(msg: String) : ArrayList<String> {
+        var resultList = ArrayList<String>()
+        // there will be 9 characters at the end, that is confirmation code
+        if (msg.length >= 9) {
+            resultList.add(msg.takeLast(9))
+        } else {
+            Log.i("error decoding", "there is less then 9 characters in the message, unusual")
+        }
+        resultList.add(msg.dropLast(9))
+        return resultList
     }
 
     private fun buildAdvertiseSettings() : AdvertiseSettings {

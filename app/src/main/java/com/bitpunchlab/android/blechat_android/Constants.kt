@@ -21,3 +21,5 @@ enum class AppStatus {
 
 val START_MESSAGE_NOTIFICATION = "StartMessageNotification"
 val STOP_MESSAGE_NOTIFICATION = "StopMessageNotification"
+
+val DISCONNECTION_KEY = "53796disconnect"
