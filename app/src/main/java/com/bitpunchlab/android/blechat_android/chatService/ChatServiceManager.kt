@@ -45,6 +45,7 @@ object ChatServiceManager {
     val message get() = _message
     private lateinit var coroutineScope: CoroutineScope
     var isChatEnded = MutableLiveData(true)
+    var confirmCodeList = MutableLiveData<List<String>>(emptyList())
 
     private var gattServerCallback = object : BluetoothGattServerCallback() {
         override fun onConnectionStateChange(device: BluetoothDevice?, status: Int, newState: Int) {
@@ -282,6 +283,9 @@ object ChatServiceManager {
             val msgModel = MessageModel(content = msg, deviceName = "You",
                 deviceAddress = connectedDevice!!.address, confirmCode = confirmCode)
             _message.postValue(msgModel)
+            // update confirmCodeList, let the ChatFragment to start verifying
+            //confirmCodeList.value
+            addConfirmCode(confirmCode)
         } else {
             Log.i(TAG, "can't send message.  gatt is null")
             return false
@@ -304,6 +308,12 @@ object ChatServiceManager {
         }
         resultList.add(msg.dropLast(9))
         return resultList
+    }
+
+    private fun addConfirmCode(code: String) {
+        val list = confirmCodeList.value!!.toMutableList()
+        list.add(code)
+        confirmCodeList.value = list
     }
 
     private fun buildAdvertiseSettings() : AdvertiseSettings {

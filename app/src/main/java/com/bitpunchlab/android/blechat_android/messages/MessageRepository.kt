@@ -12,8 +12,6 @@ private const val TAG = "MessageRepository"
 
 class MessageRepository(val database: BLEDatabase) {
 
-    //var messagesForDevice = database.messageDAO.getDeviceMessages("xx")
-
     fun getDeviceMessages(deviceAddress: String) : LiveData<List<MessageModel>> {
         return database.messageDAO.getDeviceMessages(deviceAddress)
     }

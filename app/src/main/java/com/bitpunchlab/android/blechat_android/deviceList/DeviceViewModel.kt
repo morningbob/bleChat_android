@@ -169,16 +169,3 @@ class DeviceViewModelFactory(private val application: Application)
         throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
-/*
-fun View.delayOnLifecycle(
-        durationInMillis: Long,
-        dispatcher: CoroutineDispatcher = Dispatchers.Default,
-        block: () -> Unit
-    ) : Job? = findViewTreeLifecycleOwner()?.let { lifecycleOwner ->
-        lifecycleOwner.lifecycle.coroutineScope.launch(dispatcher) {
-            delay(durationInMillis)
-            block()
-        }
-    }
-
- */

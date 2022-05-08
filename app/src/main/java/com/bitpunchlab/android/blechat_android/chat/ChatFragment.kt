@@ -183,6 +183,7 @@ class ChatFragment : Fragment() {
         })
 
         binding.sendButton.setOnClickListener {
+            //messageViewModel.verifyConfirmCode("abc")
             if (!binding.messageEditText.text.isNullOrBlank()) {
                 val msg = binding.messageEditText.text.toString()
                 // need to know if user is client or server
@@ -203,6 +204,12 @@ class ChatFragment : Fragment() {
 
         status.observe(viewLifecycleOwner, Observer { appStatus ->
             binding.stateInfo.text = appStatus
+        })
+
+        ChatServiceManager.confirmCodeList.observe(viewLifecycleOwner, Observer { list ->
+            if (!list.isNullOrEmpty()) {
+                messageViewModel.verifyConfirmCode(list)
+            }
         })
 
         return binding.root

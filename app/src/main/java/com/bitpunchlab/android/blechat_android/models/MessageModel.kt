@@ -12,5 +12,6 @@ data class MessageModel (
     var content: String,
     var deviceAddress: String,
     var deviceName: String?,
-    var confirmCode: String
+    var confirmCode: String,
+    var sent: Boolean = false
 ) : Parcelable
