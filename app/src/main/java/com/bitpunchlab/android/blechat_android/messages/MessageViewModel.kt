@@ -39,8 +39,8 @@ class MessageViewModel(val database: BLEDatabase) : ViewModel() {
         messageRecordList = messageRepository.getDeviceMessages(deviceAddress)
     }
 
-    fun verifyConfirmCode(codeList: List<String>) {
-
+    fun verifyConfirmCode(codeList: List<String>) : List<String> {
+        var verifiedCodes : MutableList<String> = emptyList<String>().toMutableList()
         var upperLimit = 0
         var lowerLimit = 0
         Log.i("verify: ", "verifying...")
@@ -59,23 +59,81 @@ class MessageViewModel(val database: BLEDatabase) : ViewModel() {
                 //Log.i("verify: i: ", i.toString())
                 messageList.value?.get(i)?.let { msg ->
                     Log.i("i: ", i.toString())
-                    for (code in codeList) {
-                        if (msg.confirmCode == code) {
-                            Log.i("verified $i", "message: ${msg.content}")
-                            msg.sent = true
-                            val messageRepo = MessageRepository(database)
-                            coroutineScope.launch {
-                                messageRepo.saveMessage(msg)
-                                Log.i("verified ", "updated message")
-                            }
-                            found = true
-                            break
 
+                    if (!msg.sent) {
+                        for (code in codeList) {
+                            if (msg.confirmCode == code) {
+                                Log.i("verified $i", "message: ${msg.content}")
+                                msg.sent = true
+                                // record that in verified list, and delete it from list of confirm codes
+                                verifiedCodes.add(code)
+                                val messageRepo = MessageRepository(database)
+                                coroutineScope.launch {
+                                    messageRepo.saveMessage(msg)
+                                    Log.i("verified ", "updated message")
+                                }
+                                found = true
+                                break
+
+                            }
                         }
                     }
                 }
                 if (found) {
                     break
+                }
+            }
+            return verifiedCodes
+        }
+        return verifiedCodes
+    }
+
+    fun verifyConfirmationCode(code: String) {
+        coroutineScope.launch {
+            var upperLimit = 0
+            var lowerLimit = 0
+            Log.i("verify: ", "verifying...")
+            messageList.value?.let { msgList ->
+                if (msgList.size > 15) {
+                    upperLimit = msgList.size - 16
+                } else {
+                    upperLimit = 0
+                }
+                lowerLimit = msgList.size - 1
+            }
+            var found = false
+            Log.i("verifying: upper lower: $upperLimit $lowerLimit ", "begin for loop")
+            if (!messageList.value.isNullOrEmpty()) {
+                for (i in lowerLimit downTo upperLimit step 1) {
+                    //Log.i("verify: i: ", i.toString())
+                    messageList.value?.get(i)?.let { msg ->
+                        Log.i("i: ", i.toString())
+                        Log.i("verifying","message in verification: $msg.content")
+                        Log.i("confirmCode got: ", code)
+                        Log.i("message's code: ", msg.confirmCode)
+                        if (!msg.sent && msg.confirmCode == code) {
+                            //for (code in codeList) {
+                            //if (msg.confirmCode == code) {
+                            Log.i("verified $i", "message: ${msg.content}")
+                            msg.sent = true
+                            // record that in verified list, and delete it from list of confirm codes
+                            //       verifiedCodes.add(code)
+                            val messageRepo = MessageRepository(database)
+                            //coroutineScope.launch {
+                            messageRepo.saveMessage(msg)
+                            Log.i("verified ", "updated message")
+                            //}
+                            found = true
+                            //       break
+
+                            //}
+                            //}
+                            //}
+                        }
+                    }
+                    if (found) {
+                        break
+                    }
                 }
             }
         }

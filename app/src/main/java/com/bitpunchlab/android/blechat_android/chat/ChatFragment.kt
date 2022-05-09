@@ -205,11 +205,23 @@ class ChatFragment : Fragment() {
         status.observe(viewLifecycleOwner, Observer { appStatus ->
             binding.stateInfo.text = appStatus
         })
-
+/*
         ChatServiceManager.confirmCodeList.observe(viewLifecycleOwner, Observer { list ->
             if (!list.isNullOrEmpty()) {
-                messageViewModel.verifyConfirmCode(list)
+                messageViewModel.verifyConfirmationCode(list)
+                //for (code in verifiedCodes) {
+                //    ChatServiceManager.removeConfirmCode(code)
+                //}
             }
+        })
+
+ */
+        // for every confirm code I got from the chat service, I run a coroutine to run
+        // through the message list once, updated the sent in message model.
+        // so the confirm code will only be checked when it arrived, for the last 15 messages
+        // then, it will be discarded.
+        ChatServiceManager.confirmCode.observe(viewLifecycleOwner, Observer { code ->
+            messageViewModel.verifyConfirmationCode(code)
         })
 
         return binding.root

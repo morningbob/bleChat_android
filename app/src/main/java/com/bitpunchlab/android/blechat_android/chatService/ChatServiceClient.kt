@@ -36,6 +36,7 @@ object ChatServiceClient {
     var connectedDevice: BluetoothDevice? = null
     var disconnectedDevice: BluetoothDevice? = null
     private lateinit var coroutineScope: CoroutineScope
+    var confirmCode = MutableLiveData<String>()
 
     private var gattClientCallback = object : BluetoothGattCallback() {
 
@@ -113,7 +114,7 @@ object ChatServiceClient {
             super.onCharacteristicChanged(gatt, characteristic)
             Log.i(TAG, "onCharChanged")
             var msgContent = ""
-            var confirmCode = ""
+            var confirmCodeForPeer = ""
             characteristic?.value.let { value ->
                 if (characteristic!!.uuid == MESSAGE_UUID) {
                     value?.let {
@@ -121,21 +122,25 @@ object ChatServiceClient {
                         // we check if it is just the confirm code sent back to confirm delivery
                         if (!msg.startsWith("confirm898", false)) {
                             val resultList = decodeConfirmCode(msg)
-                            confirmCode = resultList[0]
-                            Log.i("confirmCode: ", confirmCode)
+                            confirmCodeForPeer = resultList[0]
+                            Log.i("confirmCode: ", confirmCodeForPeer)
                             msgContent = resultList[1]
                             Log.i("message: ", msgContent)
-                            sendMessage("confirm898$confirmCode")
+                            sendMessage("confirm898$confirmCodeForPeer")
                             val msgModel = MessageModel(content = msgContent,
                                 deviceName = connectedDevice!!.name,
                                 deviceAddress = connectedDevice!!.address,
-                                confirmCode = confirmCode)
+                                confirmCode = confirmCodeForPeer)
                             _message.postValue(msgModel)
                         } else {
                             // msg starts with confirm898
                             // notify chat fragment, msg has been received.
                             // check the confirm code is the one we sent
                             Log.i("confirm message: ", msg)
+                            val resultList = decodeConfirmCode(msg)
+                            // we get the confirm code we sent to the peer, extract it
+                            // and find it in last 15 message
+                            confirmCode.postValue(resultList[0])
                         }
 
                     }
@@ -180,14 +185,15 @@ object ChatServiceClient {
     fun sendMessage(msg: String) : Boolean {
         Log.i(TAG, "client is sending message")
         // here we first check if the connected device exist
-        if (connectedDevice != null) {
-            var confirmCode = ""
+        if (connectedDevice != null && !msg.startsWith("confirm898")) {
+            var confirmCodeToVerify = ""
             // we kept a ref to message char, and write a message to it
             // then, we write the characteristic in the gatt
             if (messageCharacteristic != null) {
-                messageCharacteristic!!.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
-                confirmCode = generateRandomConfirmCode()
-                val modifiedMessage = msg + confirmCode
+                messageCharacteristic!!.writeType =
+                    BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+                confirmCodeToVerify = generateRandomConfirmCode()
+                val modifiedMessage = msg + confirmCodeToVerify
                 val messageBytes = modifiedMessage.toByteArray(Charsets.UTF_8)
                 messageCharacteristic!!.value = messageBytes
             } else {
@@ -198,14 +204,37 @@ object ChatServiceClient {
                 val writeSuccess = gatt.writeCharacteristic(messageCharacteristic)
                 Log.i(TAG, "write success? $writeSuccess")
                 if (writeSuccess) {
-                    val messageModel = MessageModel(content = msg, deviceAddress = connectedDevice!!.address,
-                    deviceName = "You", confirmCode = confirmCode)
+                    val messageModel = MessageModel(
+                        content = msg, deviceAddress = connectedDevice!!.address,
+                        deviceName = "You", confirmCode = confirmCodeToVerify
+                    )
                     _message.postValue(messageModel)
                     return true
                 } else {
                     Log.i(TAG, "there is error when writing to gatt")
                     return false
                 }
+            }
+
+        } else if (connectedDevice != null && msg.startsWith("confirm898")) {
+            if (messageCharacteristic != null) {
+                messageCharacteristic!!.writeType =
+                    BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+                val messageBytes = msg.toByteArray(Charsets.UTF_8)
+                messageCharacteristic!!.value = messageBytes
+
+                gattClient?.let { gatt ->
+                    val writeSuccess = gatt.writeCharacteristic(messageCharacteristic)
+                    Log.i(TAG, "write success? $writeSuccess")
+                    if (writeSuccess) {
+                        return true
+                    } else {
+                        Log.i(TAG, "there is error when writing to gatt")
+                        return false
+                    }
+                }
+            } else {
+                Log.i(TAG, "error of sending message: couldn't get message characteristic")
             }
         }
         return false

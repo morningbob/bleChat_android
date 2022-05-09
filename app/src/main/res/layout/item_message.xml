@@ -34,7 +34,7 @@
                 android:padding="2sp"
                 android:layout_margin="3sp"
                 android:text="@string/sent_logo"
-                android:visibility="@{messageModel.sent == false ? View.VISIBLE : View.INVISIBLE}"
+                android:visibility="@{messageModel.sent == true ? View.VISIBLE : View.INVISIBLE}"
                 android:textSize="10sp"
                 />
 

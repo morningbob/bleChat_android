@@ -46,6 +46,7 @@ object ChatServiceManager {
     private lateinit var coroutineScope: CoroutineScope
     var isChatEnded = MutableLiveData(true)
     var confirmCodeList = MutableLiveData<List<String>>(emptyList())
+    var confirmCode = MutableLiveData<String>()
 
     private var gattServerCallback = object : BluetoothGattServerCallback() {
         override fun onConnectionStateChange(device: BluetoothDevice?, status: Int, newState: Int) {
@@ -93,7 +94,8 @@ object ChatServiceManager {
             Log.i(TAG, "onChar Write, getting message")
             // check if it is the target characteristic
             var msgContent = ""
-            var confirmCode = ""
+            // for this confirmation code, we don't keep it, we just send it back to the peer
+            var confirmCodeForPeer = ""
             characteristic?.let { char ->
                 if (char.uuid == MESSAGE_UUID) {
                     val msg = value?.toString(Charsets.UTF_8)
@@ -104,17 +106,18 @@ object ChatServiceManager {
                         // if it is a confirm code, it starts with confirm898
                         if (!msg.startsWith("confirm898", false)) {
                             val resultList = decodeConfirmCode(msg)
+                            Log.i("resultList: ", resultList.toString())
                             // we will send back the confirmation code to show that we
                             // received the message.
-                            confirmCode = resultList[0]
-                            Log.i("confirmCode: ", confirmCode)
-                            sendMessage("confirm898${confirmCode}")
-                            Log.i("message", msgContent)
+                            confirmCodeForPeer = resultList[0]
+                            //Log.i("confirmCode: ", confirmCode.value!!)
+                            sendMessage("confirm898${confirmCodeForPeer}")
                             msgContent = resultList[1]
+                            Log.i("message", msgContent)
                             val msgModel =
                                 MessageModel(content = msgContent,
                                     deviceAddress = device!!.address,
-                                    deviceName = device?.name, confirmCode = confirmCode)
+                                    deviceName = device?.name, confirmCode = confirmCodeForPeer)
                             _message.postValue(msgModel)
                         } else {
                             // msg starts with confirm898
@@ -122,6 +125,11 @@ object ChatServiceManager {
                             // delivered.
                             // compare with the confirm code we generated earlier
                             Log.i("confirm message: ", msg)
+                            val resultList = decodeConfirmCode(msg)
+                            Log.i("received confirm code to verify: ", resultList[0])
+                            // we get the confirm code we sent to the peer, extract it
+                            // and find it in last 15 message
+                            confirmCode.postValue(resultList[0])
                         }
                     }
 
@@ -270,8 +278,10 @@ object ChatServiceManager {
         if (gattServer != null) {
             val service = gattServer!!.getService(SERVICE_UUID)
             val characteristic = service.getCharacteristic(MESSAGE_UUID)
-            val confirmCode = generateRandomConfirmCode()
-            val modifiedMessage = msg + confirmCode
+            if (!msg.startsWith("confirm898", false)) {
+
+            val confirmCodeToVerify = generateRandomConfirmCode()
+            val modifiedMessage = msg + confirmCodeToVerify
             val messageBytes = modifiedMessage.toByteArray(Charsets.UTF_8)
             characteristic.value = messageBytes
 
@@ -281,16 +291,24 @@ object ChatServiceManager {
 
             // we need to display the message user said to the message list.
             val msgModel = MessageModel(content = msg, deviceName = "You",
-                deviceAddress = connectedDevice!!.address, confirmCode = confirmCode)
+                deviceAddress = connectedDevice!!.address, confirmCode = confirmCodeToVerify)
             _message.postValue(msgModel)
             // update confirmCodeList, let the ChatFragment to start verifying
             //confirmCodeList.value
-            addConfirmCode(confirmCode)
+            addConfirmCode(confirmCodeToVerify)
+            return true
+            } else if (msg.startsWith("confirm898", false)){
+                // send the confirm898XXXXX code
+                val messageBytes = msg.toByteArray(Charsets.UTF_8)
+                characteristic.value = messageBytes
+                return gattServer!!.notifyCharacteristicChanged(connectedDevice, characteristic, false)
+            }
+            return false
         } else {
             Log.i(TAG, "can't send message.  gatt is null")
             return false
         }
-        return false
+        //return false
     }
 
     private fun generateRandomConfirmCode() : String {
@@ -313,7 +331,19 @@ object ChatServiceManager {
     private fun addConfirmCode(code: String) {
         val list = confirmCodeList.value!!.toMutableList()
         list.add(code)
-        confirmCodeList.value = list
+        confirmCodeList.postValue(list)
+    }
+
+    fun removeConfirmCode(code: String) {
+        if (!confirmCodeList.value.isNullOrEmpty()) {
+            val list = confirmCodeList.value!!.toMutableList()
+            for (each in list) {
+                if (each == code) {
+                    list.remove(each)
+                }
+            }
+            confirmCodeList.value = list
+        }
     }
 
     private fun buildAdvertiseSettings() : AdvertiseSettings {
