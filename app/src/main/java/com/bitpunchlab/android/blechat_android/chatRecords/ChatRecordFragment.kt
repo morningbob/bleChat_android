@@ -52,13 +52,13 @@ class ChatRecordFragment : Fragment() {
             .get(MessageViewModel::class.java)
         deviceAddress?.let {
             //messageViewModel.getDeviceMessages(it)
-            messageList = messageViewModel.getDeviceMessages(deviceAddress!!)
+            messageViewModel.getDeviceMessages(deviceAddress!!)
             Log.i(TAG, "got device address, getting corresponding messages")
         }
 
         messageBinding!!.messageRecycler.adapter = messageAdapter
 
-        messageList.observe(viewLifecycleOwner, Observer { messageList ->
+        messageViewModel.messageRecordList.observe(viewLifecycleOwner, Observer { messageList ->
             Log.i(TAG, "message record list changes")
             Log.i(TAG, "message list count: ${messageList.size}")
             if (!messageList.isNullOrEmpty()) {

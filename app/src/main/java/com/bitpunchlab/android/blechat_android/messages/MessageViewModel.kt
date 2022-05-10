@@ -31,8 +31,8 @@ class MessageViewModel(val database: BLEDatabase) : ViewModel() {
         repo.saveMessage(msgModel)
     }
 
-    fun getDeviceMessages(deviceAddress: String) : LiveData<List<MessageModel>> {
-        return messageRepository.getDeviceMessages(deviceAddress)
+    fun getDeviceMessages(deviceAddress: String)  {
+        messageRecordList =  messageRepository.getDeviceMessages(deviceAddress)
     }
 
     fun verifyConfirmationCode(code: String) {
@@ -59,23 +59,14 @@ class MessageViewModel(val database: BLEDatabase) : ViewModel() {
                         Log.i("confirmCode got: ", code)
                         Log.i("message's code: ", msg.confirmCode)
                         if (!msg.sent && msg.confirmCode == code) {
-                            //for (code in codeList) {
-                            //if (msg.confirmCode == code) {
                             Log.i("verified $i", "message: ${msg.content}")
                             msg.sent = true
                             // record that in verified list, and delete it from list of confirm codes
                             //       verifiedCodes.add(code)
                             val messageRepo = MessageRepository(database)
-                            //coroutineScope.launch {
                             messageRepo.saveMessage(msg)
                             Log.i("verified ", "updated message")
-                            //}
                             found = true
-                            //       break
-
-                            //}
-                            //}
-                            //}
                         }
                     }
                     if (found) {

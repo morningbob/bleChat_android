@@ -103,15 +103,17 @@ class ChatFragment : Fragment() {
 
         deviceAddress?.let {
             //messageViewModel.getDeviceMessages(deviceAddress!!)
-            messageList = messageViewModel.getDeviceMessages(deviceAddress!!)
+            //messageList = messageViewModel.getDeviceMessages(deviceAddress!!)
+            messageViewModel.getDeviceMessages(deviceAddress!!)
         }
 
         messageAdapter = MessageListAdapter()
         messageBinding!!.messageRecycler.adapter = messageAdapter
 
-        messageList.observe(viewLifecycleOwner, Observer { messageList ->
-            messageList.isNullOrEmpty().let {
+        messageViewModel.messageRecordList.observe(viewLifecycleOwner, Observer { messageList ->
+            messageList?.let {
                 // submit list
+                //messageViewModel.messageRecordList.value = messageList
                 Log.i(TAG, "observed message list changed")
                 messageAdapter.submitList(messageList)
                 messageAdapter.notifyDataSetChanged()
