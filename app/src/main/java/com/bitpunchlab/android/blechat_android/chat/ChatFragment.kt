@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -56,6 +57,7 @@ class ChatFragment : Fragment() {
     private var disconnectedDevice : BluetoothDevice? = null
     private var connectionStateHistory = ArrayList<ConnectionState>()
     private var status = MutableLiveData<String>("")
+    private lateinit var messageList: LiveData<List<MessageModel>>
     //private var disconnectAlert = MutableLiveData<Dialog>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -83,9 +85,11 @@ class ChatFragment : Fragment() {
         messageViewModel = ViewModelProvider(requireActivity(), MessageViewModelFactory(database))
             .get(MessageViewModel::class.java)
 
+
         isClient = requireArguments().getBoolean("isClient")
         deviceName = requireArguments().getString("deviceName")
         deviceAddress = requireArguments().getString("deviceAddress")
+
 
         if (deviceAddress != null) {
             // save the device when the fragment starts
@@ -97,10 +101,15 @@ class ChatFragment : Fragment() {
                 deviceViewModel.connectingDevice!!.address)
         }
 
+        deviceAddress?.let {
+            //messageViewModel.getDeviceMessages(deviceAddress!!)
+            messageList = messageViewModel.getDeviceMessages(deviceAddress!!)
+        }
+
         messageAdapter = MessageListAdapter()
         messageBinding!!.messageRecycler.adapter = messageAdapter
 
-        messageViewModel.messageList.observe(viewLifecycleOwner, Observer { messageList ->
+        messageList.observe(viewLifecycleOwner, Observer { messageList ->
             messageList.isNullOrEmpty().let {
                 // submit list
                 Log.i(TAG, "observed message list changed")
@@ -114,8 +123,8 @@ class ChatFragment : Fragment() {
                 Log.i(TAG, "observed message from manager")
                 // we start the notification with the content of the message
 
-                saveMessage(msg)
-                messageViewModel.addMessage(msg)
+                //saveMessage(msg)
+                messageViewModel.saveMessage(msg)
                 if (msg.deviceName != "You") {
                     startMessageNotification(msg.content)
                 }
@@ -130,8 +139,8 @@ class ChatFragment : Fragment() {
                 // the user sent.  We only send notification when receive message from
                 // the other device.
 
-                saveMessage(msg)
-                messageViewModel.addMessage(msg)
+                //saveMessage(msg)
+                messageViewModel.saveMessage(msg)
                 if (msg.deviceName != "You") {
                     startMessageNotification(msg.content)
                 }
@@ -224,6 +233,10 @@ class ChatFragment : Fragment() {
             messageViewModel.verifyConfirmationCode(code)
         })
 
+        ChatServiceClient.confirmCode.observe(viewLifecycleOwner, Observer { code ->
+            messageViewModel.verifyConfirmationCode(code)
+        })
+
         return binding.root
     }
 
@@ -273,9 +286,9 @@ class ChatFragment : Fragment() {
         Log.i(TAG, "device saved")
     }
 
-    private fun saveMessage(message: MessageModel) {
-        messageRepository.saveMessage(message)
-    }
+    //private fun saveMessage(message: MessageModel) {
+    //    messageRepository.saveMessage(message)
+    //}
 
     @SuppressLint("MissingPermission")
     private fun disconnectionAlert(device: BluetoothDevice) {

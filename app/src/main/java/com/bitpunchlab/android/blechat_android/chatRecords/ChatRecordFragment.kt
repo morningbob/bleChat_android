@@ -6,6 +6,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.bitpunchlab.android.blechat_android.R
@@ -15,6 +16,7 @@ import com.bitpunchlab.android.blechat_android.databinding.MessageListBinding
 import com.bitpunchlab.android.blechat_android.messages.MessageListAdapter
 import com.bitpunchlab.android.blechat_android.messages.MessageViewModel
 import com.bitpunchlab.android.blechat_android.messages.MessageViewModelFactory
+import com.bitpunchlab.android.blechat_android.models.MessageModel
 import kotlinx.coroutines.InternalCoroutinesApi
 
 private const val TAG = "ChatRecordFragment"
@@ -28,6 +30,7 @@ class ChatRecordFragment : Fragment() {
     private var messageBinding: MessageListBinding? = null
     private lateinit var messageAdapter: MessageListAdapter
     private var deviceAddress: String? = null
+    private lateinit var messageList: LiveData<List<MessageModel>>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,13 +51,14 @@ class ChatRecordFragment : Fragment() {
         messageViewModel = ViewModelProvider(requireActivity(), MessageViewModelFactory(database))
             .get(MessageViewModel::class.java)
         deviceAddress?.let {
-            messageViewModel.getDeviceMessages(it)
+            //messageViewModel.getDeviceMessages(it)
+            messageList = messageViewModel.getDeviceMessages(deviceAddress!!)
             Log.i(TAG, "got device address, getting corresponding messages")
         }
 
         messageBinding!!.messageRecycler.adapter = messageAdapter
 
-        messageViewModel.messageRecordList.observe(viewLifecycleOwner, Observer { messageList ->
+        messageList.observe(viewLifecycleOwner, Observer { messageList ->
             Log.i(TAG, "message record list changes")
             Log.i(TAG, "message list count: ${messageList.size}")
             if (!messageList.isNullOrEmpty()) {
