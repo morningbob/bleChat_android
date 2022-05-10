@@ -280,23 +280,23 @@ object ChatServiceManager {
             val characteristic = service.getCharacteristic(MESSAGE_UUID)
             if (!msg.startsWith("confirm898", false)) {
 
-            val confirmCodeToVerify = generateRandomConfirmCode()
-            val modifiedMessage = msg + confirmCodeToVerify
-            val messageBytes = modifiedMessage.toByteArray(Charsets.UTF_8)
-            characteristic.value = messageBytes
+                val confirmCodeToVerify = generateRandomConfirmCode()
+                val modifiedMessage = msg + confirmCodeToVerify
+                val messageBytes = modifiedMessage.toByteArray(Charsets.UTF_8)
+                characteristic.value = messageBytes
 
-            // here, we notify client
-            val success = gattServer!!.notifyCharacteristicChanged(connectedDevice, characteristic, false)
-            Log.i(TAG, "server wrote to character and notify client, success? $success")
+                // here, we notify client
+                val success = gattServer!!.notifyCharacteristicChanged(connectedDevice, characteristic, false)
+                Log.i(TAG, "server wrote to character and notify client, success? $success")
 
-            // we need to display the message user said to the message list.
-            val msgModel = MessageModel(content = msg, deviceName = "You",
-                deviceAddress = connectedDevice!!.address, confirmCode = confirmCodeToVerify)
-            _message.postValue(msgModel)
-            // update confirmCodeList, let the ChatFragment to start verifying
-            //confirmCodeList.value
-            addConfirmCode(confirmCodeToVerify)
-            return true
+                // we need to display the message user said to the message list.
+                val msgModel = MessageModel(content = msg, deviceName = "You",
+                    deviceAddress = connectedDevice!!.address, confirmCode = confirmCodeToVerify)
+                _message.postValue(msgModel)
+                // update confirmCodeList, let the ChatFragment to start verifying
+                //confirmCodeList.value
+                addConfirmCode(confirmCodeToVerify)
+                return success
             } else if (msg.startsWith("confirm898", false)){
                 // send the confirm898XXXXX code
                 val messageBytes = msg.toByteArray(Charsets.UTF_8)
