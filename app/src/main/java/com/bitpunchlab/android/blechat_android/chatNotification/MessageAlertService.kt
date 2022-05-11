@@ -12,6 +12,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.bitpunchlab.android.blechat_android.R
+import com.bitpunchlab.android.blechat_android.START_MESSAGE_NOTIFICATION
 import com.bitpunchlab.android.blechat_android.chat.ChatFragment
 
 private const val TAG = "MessageAlertService"
@@ -39,12 +40,14 @@ class MessageAlertService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // we create the notification itself here, every time we start the service.
+        super.onStartCommand(intent, flags, startId)
         message = intent?.extras?.getString("message").toString()
         Log.i(TAG, "onStartCommand: message: $message")
         // here, the channel, just as a precaution
+        if (intent!!.action.equals(START_MESSAGE_NOTIFICATION))
         createNotificationChannel()
         createNotification()
-        super.onStartCommand(intent, flags, startId)
+
         // I don't want the app to be too aggressive
         return START_NOT_STICKY
     }

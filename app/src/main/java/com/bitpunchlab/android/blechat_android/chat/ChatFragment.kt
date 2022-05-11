@@ -18,6 +18,7 @@ import androidx.navigation.fragment.findNavController
 import com.bitpunchlab.android.blechat_android.ConnectionState
 import com.bitpunchlab.android.blechat_android.R
 import com.bitpunchlab.android.blechat_android.START_MESSAGE_NOTIFICATION
+import com.bitpunchlab.android.blechat_android.STOP_MESSAGE_NOTIFICATION
 import com.bitpunchlab.android.blechat_android.chatNotification.MessageAlertService
 import com.bitpunchlab.android.blechat_android.chatService.ChatServiceClient
 import com.bitpunchlab.android.blechat_android.chatService.ChatServiceManager
@@ -58,6 +59,7 @@ class ChatFragment : Fragment() {
     private var connectionStateHistory = ArrayList<ConnectionState>()
     private var status = MutableLiveData<String>("")
     private lateinit var messageList: LiveData<List<MessageModel>>
+    private var isNotificationOn = MutableLiveData<Boolean>(false)
     //private var disconnectAlert = MutableLiveData<Dialog>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -110,12 +112,22 @@ class ChatFragment : Fragment() {
         messageAdapter = MessageListAdapter()
         messageBinding!!.messageRecycler.adapter = messageAdapter
 
+        isNotificationOn.observe(viewLifecycleOwner, Observer { isOn ->
+            if (!isOn) {
+                // link to menu interface here
+            } else {
+
+            }
+        })
+
         messageViewModel.messageRecordList.observe(viewLifecycleOwner, Observer { messageList ->
             messageList?.let {
                 // submit list
                 //messageViewModel.messageRecordList.value = messageList
                 Log.i(TAG, "observed message list changed")
+                Log.i(TAG, "for message: ${messageList.last().content}")
                 messageAdapter.submitList(messageList)
+                messageBinding!!.messageRecycler.smoothScrollToPosition(messageList.size - 1)
                 messageAdapter.notifyDataSetChanged()
             }
         })
@@ -144,7 +156,7 @@ class ChatFragment : Fragment() {
                 //saveMessage(msg)
                 messageViewModel.saveMessage(msg)
                 if (msg.deviceName != "You") {
-                    startMessageNotification(msg.content)
+                    //startMessageNotification(msg.content)
                 }
             }
         })
@@ -216,17 +228,6 @@ class ChatFragment : Fragment() {
         status.observe(viewLifecycleOwner, Observer { appStatus ->
             binding.stateInfo.text = appStatus
         })
-/*
-        ChatServiceManager.confirmCodeList.observe(viewLifecycleOwner, Observer { list ->
-            if (!list.isNullOrEmpty()) {
-                messageViewModel.verifyConfirmationCode(list)
-                //for (code in verifiedCodes) {
-                //    ChatServiceManager.removeConfirmCode(code)
-                //}
-            }
-        })
-
- */
         // for every confirm code I got from the chat service, I run a coroutine to run
         // through the message list once, updated the sent in message model.
         // so the confirm code will only be checked when it arrived, for the last 15 messages
@@ -250,6 +251,9 @@ class ChatFragment : Fragment() {
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.menu_chat, menu)
+        //R.id.notification
+        //menu.findItem(R.id.startNotification).isVisible = !isNotificationOn.value!!
+        //menu.findItem(R.id.stopNotification).isVisible = isNotificationOn.value!!
         super.onCreateOptionsMenu(menu, inflater)
     }
 
@@ -259,11 +263,17 @@ class ChatFragment : Fragment() {
             R.id.disconnect -> {
                 if (!isClient) {
                     if (ChatServiceManager.connectedDevice != null) {
-                        // in this case, we disconnect the current connected device
-                        ChatServiceManager.disconnectDevice(ChatServiceManager.connectedDevice!!)
+                        if (ChatServiceManager.sendMessage("disconnect735946")) {
+                            // in this case, we disconnect the current connected device
+                            ChatServiceManager.disconnectDevice(ChatServiceManager.connectedDevice!!)
+                        }
                     } else if (ChatServiceManager.disconnectedDevice != null) {
                         // in this case, we clear the resources
-                        ChatServiceManager.disconnectDevice(ChatServiceManager.disconnectedDevice!!)
+                        if (ChatServiceManager.sendMessage("disconnect735946")) {
+                            // in this case, we disconnect the current connected device
+                            ChatServiceManager.disconnectDevice(ChatServiceManager.disconnectedDevice!!)
+                        }
+
                     }
                 } else {
                     if (ChatServiceClient.connectedDevice != null) {
@@ -274,6 +284,16 @@ class ChatFragment : Fragment() {
                         ChatServiceClient.disconnectDevice(ChatServiceClient.disconnectedDevice!!)
                     }
                 }
+            }
+            R.id.startNotification -> {
+                //if (!isNotificationOn.value!!) {
+                    startMessageNotification("xxx")
+                //} else {
+                //    stopMessageNotification()
+                //}
+            }
+            R.id.stopNotification -> {
+                stopMessageNotification()
             }
         }
         return super.onOptionsItemSelected(item)
@@ -287,10 +307,6 @@ class ChatFragment : Fragment() {
         deviceRepository.saveDevice(deviceModel)
         Log.i(TAG, "device saved")
     }
-
-    //private fun saveMessage(message: MessageModel) {
-    //    messageRepository.saveMessage(message)
-    //}
 
     @SuppressLint("MissingPermission")
     private fun disconnectionAlert(device: BluetoothDevice) {
@@ -334,15 +350,25 @@ class ChatFragment : Fragment() {
 
     private fun startMessageNotification(message: String) {
         val intent = Intent(requireContext(), MessageAlertService::class.java)
+        // this action is used to identify our intention inside the service
+        // the service check if it is start, or stop, and behave so accordingly.
         intent.action = START_MESSAGE_NOTIFICATION
         intent.putExtra("message", message)
         requireContext().startService(intent)
+        isNotificationOn.value = true
         Log.i(TAG, "started notification service")
+    }
+
+    private fun stopMessageNotification() {
+        val intent = Intent(requireContext(), MessageAlertService::class.java)
+        intent.action = STOP_MESSAGE_NOTIFICATION
+        requireContext().startService(intent)
+        isNotificationOn.value = false
+        Log.i(TAG, "stopping notification service")
     }
 
     @SuppressLint("MissingPermission")
     private fun getAppStatus(state: ConnectionState, device: BluetoothDevice?)  {
-        //status = ""
         when (state) {
             ConnectionState.STATE_NONE -> {
                 status.value = "Waiting for your instruction..."
@@ -358,6 +384,5 @@ class ChatFragment : Fragment() {
             }
             else -> status.value = "Waiting for you instruction..."
         }
-        //return status
     }
 }

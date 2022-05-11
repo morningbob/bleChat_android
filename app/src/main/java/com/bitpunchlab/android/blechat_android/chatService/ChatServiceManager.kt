@@ -246,6 +246,9 @@ object ChatServiceManager {
         //if (connectionState.value == ConnectionState.STATE_CONNECTED &&
         //        gattServer != null) {
             gattServer!!.apply {
+                // we'll send a disconnect request to the client, which ask the client to do
+                // the disconnection also.
+
                 // we'll look into how to better disconnect the device.
                 clearServices()
                 close()
@@ -297,7 +300,7 @@ object ChatServiceManager {
                 //confirmCodeList.value
                 addConfirmCode(confirmCodeToVerify)
                 return success
-            } else if (msg.startsWith("confirm898", false)){
+            } else if (msg.startsWith("confirm898", false) || (msg.startsWith("disconnect735946"))){
                 // send the confirm898XXXXX code
                 val messageBytes = msg.toByteArray(Charsets.UTF_8)
                 characteristic.value = messageBytes
@@ -308,7 +311,6 @@ object ChatServiceManager {
             Log.i(TAG, "can't send message.  gatt is null")
             return false
         }
-        //return false
     }
 
     private fun generateRandomConfirmCode() : String {

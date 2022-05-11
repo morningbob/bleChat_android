@@ -120,7 +120,7 @@ object ChatServiceClient {
                     value?.let {
                         val msg = it.toString(Charsets.UTF_8)
                         // we check if it is just the confirm code sent back to confirm delivery
-                        if (!msg.startsWith("confirm898", false)) {
+                        if (!msg.startsWith("confirm898", false) && (!msg.startsWith("disconnect735946"))) {
                             val resultList = decodeConfirmCode(msg)
                             confirmCodeForPeer = resultList[0]
                             Log.i("confirmCode: ", confirmCodeForPeer)
@@ -132,7 +132,7 @@ object ChatServiceClient {
                                 deviceAddress = connectedDevice!!.address,
                                 confirmCode = confirmCodeForPeer)
                             _message.postValue(msgModel)
-                        } else {
+                        } else if (msg.startsWith("confirm898")){
                             // msg starts with confirm898
                             // notify chat fragment, msg has been received.
                             // check the confirm code is the one we sent
@@ -141,6 +141,10 @@ object ChatServiceClient {
                             // we get the confirm code we sent to the peer, extract it
                             // and find it in last 15 message
                             confirmCode.postValue(resultList[0])
+                        } else if (msg.startsWith("disconnect735946")) {
+                            // if we receive this message, the server is asking the client to
+                            // perform disconnection.
+                            disconnectDevice(connectedDevice!!)
                         }
 
                     }
@@ -175,7 +179,7 @@ object ChatServiceClient {
                 }
             }
             disconnectedDevice = device
-            connectionState.value = ConnectionState.STATE_DISCONNECTED
+            connectionState.postValue(ConnectionState.STATE_DISCONNECTED)
             connectedDevice = null
 
         }

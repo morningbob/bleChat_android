@@ -20,6 +20,7 @@ class MessageViewModel(val database: BLEDatabase) : ViewModel() {
     private var messageRepository: MessageRepository = MessageRepository(database)
     //lateinit var messageRecordList = messageRepository.getDeviceMessages(deviceAddress)
     lateinit var messageRecordList : LiveData<List<MessageModel>>
+    //var lastMessageID: Long = 0
     private var coroutineScope: CoroutineScope
 
     init {
@@ -41,8 +42,8 @@ class MessageViewModel(val database: BLEDatabase) : ViewModel() {
             var lowerLimit = 0
             Log.i("verify: ", "verifying...")
             messageRecordList.value?.let { msgList ->
-                if (msgList.size > 15) {
-                    upperLimit = msgList.size - 16
+                if (msgList.size > 25) {
+                    upperLimit = msgList.size - 25 - 1
                 } else {
                     upperLimit = 0
                 }
@@ -58,11 +59,10 @@ class MessageViewModel(val database: BLEDatabase) : ViewModel() {
                         Log.i("verifying","message in verification: $msg.content")
                         Log.i("confirmCode got: ", code)
                         Log.i("message's code: ", msg.confirmCode)
-                        if (!msg.sent && msg.confirmCode == code) {
+                        if (msg.deviceName == "You" && !msg.sent && msg.confirmCode == code) {
                             Log.i("verified $i", "message: ${msg.content}")
                             msg.sent = true
                             // record that in verified list, and delete it from list of confirm codes
-                            //       verifiedCodes.add(code)
                             val messageRepo = MessageRepository(database)
                             messageRepo.saveMessage(msg)
                             Log.i("verified ", "updated message")

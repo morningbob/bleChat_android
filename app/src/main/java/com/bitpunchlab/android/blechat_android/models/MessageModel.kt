@@ -8,10 +8,11 @@ import kotlinx.android.parcel.Parcelize
 @Entity(tableName = "message_table")
 @Parcelize
 data class MessageModel (
-    @PrimaryKey(autoGenerate = true) var id: Int = 0,
+    @PrimaryKey(autoGenerate = true) var id: Long = 0,
     var content: String,
     var deviceAddress: String,
     var deviceName: String?,
     var confirmCode: String,
     var sent: Boolean = false
+
 ) : Parcelable

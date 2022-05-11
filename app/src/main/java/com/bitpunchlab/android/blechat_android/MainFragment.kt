@@ -24,6 +24,7 @@ import com.bitpunchlab.android.blechat_android.deviceList.DeviceListAdapter
 import com.bitpunchlab.android.blechat_android.deviceList.DeviceListener
 import com.bitpunchlab.android.blechat_android.deviceList.DeviceViewModel
 import com.bitpunchlab.android.blechat_android.deviceList.DeviceViewModelFactory
+import com.bitpunchlab.android.blechat_android.messages.MessageViewModel
 import com.bitpunchlab.android.blechat_android.models.MessageModel
 import kotlinx.coroutines.InternalCoroutinesApi
 
@@ -35,6 +36,7 @@ class MainFragment : Fragment() {
     private val binding get() = _binding!!
     private lateinit var deviceAdapter: DeviceListAdapter
     private lateinit var deviceViewModel: DeviceViewModel
+    private lateinit var messageViewModel: MessageViewModel
     private var connectDevice: BluetoothDevice? = null
     private lateinit var database: BLEDatabase
     private var deviceBinding: DeviceListBinding? = null

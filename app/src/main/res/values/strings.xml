@@ -42,5 +42,7 @@
     <string name="start_server_alert_desc">Do you want to start the chat server to listen to incoming connections?</string>
     <string name="start_button">Start</string>
     <string name="sent_logo">sent</string>
+    <string name="start_notification">Turn on Notification</string>
+    <string name="stop_notification">Turn off Notification</string>
 
 </resources>
