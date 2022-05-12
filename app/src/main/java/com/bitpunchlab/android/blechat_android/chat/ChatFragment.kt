@@ -1,6 +1,7 @@
 package com.bitpunchlab.android.blechat_android.chat
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.AlertDialog
 import android.app.Dialog
 import android.app.NotificationManager
@@ -9,10 +10,16 @@ import android.content.ComponentName
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.ServiceConnection
+import android.database.Cursor
+import android.net.Uri
 import android.os.Bundle
 import android.os.IBinder
+import android.provider.MediaStore
 import android.util.Log
 import android.view.*
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.NotificationManagerCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LiveData
@@ -37,6 +44,7 @@ import com.bitpunchlab.android.blechat_android.messages.MessageViewModelFactory
 import com.bitpunchlab.android.blechat_android.models.DeviceModel
 import com.bitpunchlab.android.blechat_android.models.MessageModel
 import kotlinx.coroutines.*
+import java.io.File
 
 private const val TAG = "ChatFragment"
 
@@ -64,9 +72,6 @@ class ChatFragment : Fragment() {
     private var isNotificationOn = MutableLiveData<Boolean>(false)
     private lateinit var messageAlertService : MessageAlertService
     private var mBound = false
-    //private lateinit var messageServiceConnection : ServiceConnection
-
-    //private var disconnectAlert = MutableLiveData<Dialog>()
 
     private val messageServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName?, service: IBinder?) {
@@ -78,6 +83,29 @@ class ChatFragment : Fragment() {
         override fun onServiceDisconnected(p0: ComponentName?) {
             mBound = false
         }
+    }
+
+    private val chooseItemLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            result: ActivityResult ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                Log.i(TAG, "started chooser")
+                // get the file uri from data
+                if (result.data!!.data != null) {
+                    Log.i(TAG, "data comes back")
+                    // we get the picked file uri here
+                    // we also get the filename of the file
+                    // in order to ask for user's confirmation to send the file
+                    //val chosenUri = result.data!!.data!!
+                    //val path: String = File(result.data!!.data!!.path).absolutePath
+                    //val filename = getFileName(path, chosenUri)
+                    //Log.i(TAG, "chosen file uri $chosenUri")
+                    //sendFileConfirmationAlert(filename, chosenUri)
+                }
+            } else {
+                Log.i(TAG, "failed to start chooser")
+            }
+
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -144,8 +172,6 @@ class ChatFragment : Fragment() {
             msg?.let {
                 Log.i(TAG, "observed message from manager")
                 // we start the notification with the content of the message
-
-                //saveMessage(msg)
                 messageViewModel.saveMessage(msg)
                 if (msg.deviceName != "You" && isNotificationOn.value!!) {
                     startMessageNotification(msg.content)
@@ -160,8 +186,6 @@ class ChatFragment : Fragment() {
                 // "You" identifies the messages are from device, or just messages
                 // the user sent.  We only send notification when receive message from
                 // the other device.
-
-                //saveMessage(msg)
                 messageViewModel.saveMessage(msg)
                 if (msg.deviceName != "You" && isNotificationOn.value!!) {
                     startMessageNotification(msg.content)
@@ -172,15 +196,6 @@ class ChatFragment : Fragment() {
         ChatServiceManager.connectionState.observe(viewLifecycleOwner, Observer { state ->
             if (state == ConnectionState.STATE_DISCONNECTED) {
                 // alert user of the disconnection
-                //if (!isClient) {
-                // we check if we showed the disconnection alert already before showing it again
-                //if (!isDisconnectedShown && disconnectedDevice != ChatServiceManager.disconnectedDevice) {
-                //if (connectionStateHistory.last() != null &&
-                    //connectionStateHistory.last() != ConnectionState.STATE_CONNECTED) {
-                    //disconnectionAlert(ChatServiceManager.disconnectedDevice!!)
-                    //connectionStateHistory.add(ConnectionState.STATE_DISCONNECTED)
-                //}
-                //}
                 getAppStatus(state, null)
 
             } else if (state == ConnectionState.STATE_CONNECTED) {
@@ -195,14 +210,6 @@ class ChatFragment : Fragment() {
         ChatServiceClient.connectionState.observe(viewLifecycleOwner, Observer { state ->
 
             if (state == ConnectionState.STATE_DISCONNECTED) {
-                //if (!isDisconnectedShown && disconnectedDevice != ChatServiceManager.disconnectedDevice) {
-                //if (connectionStateHistory.last() == ConnectionState.STATE_CONNECTED) {
-                //    if (ChatServiceManager.disconnectedDevice != null) {
-                //        disconnectionAlert(ChatServiceManager.disconnectedDevice!!)
-                //    } else {
-                 //       Log.i("connection state changes", "null disconnected device")
-                 //   }
-                //}
                 getAppStatus(state, null)
             } else if (state == ConnectionState.STATE_CONNECTED) {
                 // we record that in app state history
@@ -218,7 +225,6 @@ class ChatFragment : Fragment() {
         }
 
         binding.sendButton.setOnClickListener {
-            //messageViewModel.verifyConfirmCode("abc")
             if (!binding.messageEditText.text.isNullOrBlank()) {
                 val msg = binding.messageEditText.text.toString()
                 // need to know if user is client or server
@@ -317,6 +323,9 @@ class ChatFragment : Fragment() {
                     }
                 }
             }
+            R.id.sentFile -> {
+                displayChooser()
+            }
         }
         return super.onOptionsItemSelected(item)
     }
@@ -351,15 +360,8 @@ class ChatFragment : Fragment() {
                 // the dialog is dimissed,  But for the client
                 // or the samsung phone, the dialog can't be
                 // dismissed.
-                //coroutineScope.launch {
-                    dialog.dismiss()
-                //    dismissDialogFinished.postValue(true)
+                dialog.dismiss()
                 findNavController().popBackStack()
-                //findNavController().navigateUp()
-
-                //}
-                // pop this fragment
-                //findNavController().popBackStack()
             })
         disconnectAlert.setNegativeButton(getString(R.string.stay_in_chat_button),
             DialogInterface.OnClickListener() { dialog, button ->
@@ -385,10 +387,6 @@ class ChatFragment : Fragment() {
     }
 
     private fun stopMessageNotification() {
-
-        //val notificationManager = NotificationManagerCompat.from(requireContext())
-        //notificationManager.cancel(NOTIFICATION_ID)
-
         // we stop the service here
         val intent = Intent(requireContext(), MessageAlertService::class.java)
         //intent.action = STOP_MESSAGE_NOTIFICATION
@@ -414,5 +412,51 @@ class ChatFragment : Fragment() {
             }
             else -> status.value = "Waiting for you instruction..."
         }
+    }
+
+    // let user choose any type of file to send
+    private fun displayChooser() {
+        val intent = Intent()
+        intent.type = "*/*"
+        intent.action = Intent.ACTION_GET_CONTENT
+        chooseItemLauncher.launch(intent)
+    }
+
+    private fun getFileName(path: String, uri: Uri) : String {
+        var fileName : String = ""
+        if (path != null) {
+            val filename: String
+            val cursor: Cursor? = requireContext().contentResolver
+                .query(uri, null, null, null, null)
+            if (cursor == null) filename = uri.path.toString() else {
+                cursor.moveToFirst()
+                val idx: Int = cursor.getColumnIndex(MediaStore.Files.FileColumns.DISPLAY_NAME)
+                filename = cursor.getString(idx)
+                cursor.close()
+            }
+            val name = filename.substring(0, filename.lastIndexOf("."))
+            val extension = filename.substring(filename.lastIndexOf(".") + 1)
+            fileName = "$name.$extension"
+        }
+        return fileName
+    }
+
+    private fun sendFileConfirmationAlert(filename: String, chosenUri: Uri) {
+        var sendFileAlert = AlertDialog.Builder(context)
+
+        sendFileAlert.setCancelable(false)
+        sendFileAlert.setTitle(getString(R.string.send_file_confirmation_alert_title))
+        sendFileAlert.setMessage("Do you want to send the file $filename?")
+
+        sendFileAlert.setPositiveButton(getString(R.string.confirm_button)) { dialog, button ->
+            // send the file
+            Log.i(TAG, "start to send file here")
+        }
+
+        sendFileAlert.setNegativeButton(getString(R.string.cancel_button)) { dialog, button ->
+            // do nothing
+        }
+
+        sendFileAlert.show()
     }
 }
