@@ -23,7 +23,7 @@
     <string name="connect_device_alert_desc"></string>
     <string name="confirm_button">Confirm</string>
     <string name="send_button">Send</string>
-    <string name="message_title">Messages</string>
+    <string name="message_title">Message</string>
     <string name="start_server">Start Server</string>
     <string name="stop_server">Stop Server</string>
     <string name="incoming_connection_alert_title">Incoming Connection</string>

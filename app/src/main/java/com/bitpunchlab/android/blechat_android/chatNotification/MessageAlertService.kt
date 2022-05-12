@@ -6,18 +6,21 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.bitpunchlab.android.blechat_android.NOTIFICATION_ID
 import com.bitpunchlab.android.blechat_android.R
 import com.bitpunchlab.android.blechat_android.START_MESSAGE_NOTIFICATION
+import com.bitpunchlab.android.blechat_android.STOP_MESSAGE_NOTIFICATION
 import com.bitpunchlab.android.blechat_android.chat.ChatFragment
 
 private const val TAG = "MessageAlertService"
 private const val CHANNEL_ID = "BLEChat_Notice"
-private const val NOTIFICATION_ID = 931587
+
 
 
 // this service is to show notification whenever there is a new message
@@ -28,6 +31,8 @@ private const val NOTIFICATION_ID = 931587
 class MessageAlertService : Service() {
 
     private var message = ""
+    //private lateinit var notificationManager: NotificationManagerCompat
+    var mBinder: IBinder = LocalBinder()
 
     override fun onCreate() {
         // we create the notification channel as early as possible
@@ -44,7 +49,6 @@ class MessageAlertService : Service() {
         message = intent?.extras?.getString("message").toString()
         Log.i(TAG, "onStartCommand: message: $message")
         // here, the channel, just as a precaution
-        if (intent!!.action.equals(START_MESSAGE_NOTIFICATION))
         createNotificationChannel()
         createNotification()
 
@@ -53,7 +57,7 @@ class MessageAlertService : Service() {
     }
 
     override fun onBind(p0: Intent?): IBinder? {
-        TODO("Not yet implemented")
+        return mBinder
     }
 
     private fun createNotification() {
@@ -94,4 +98,19 @@ class MessageAlertService : Service() {
             notificationManager.createNotificationChannel(channel)
         }
     }
+
+    // we cancel the notification that's already sent
+    fun cancelNotificationSent() {
+        NotificationManagerCompat.from(applicationContext).cancel(NOTIFICATION_ID)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.i(TAG, "the service is destroyed.")
+    }
+
+    inner class LocalBinder : Binder() {
+        fun getMessageServiceInstance() : MessageAlertService = this@MessageAlertService
+    }
 }
+

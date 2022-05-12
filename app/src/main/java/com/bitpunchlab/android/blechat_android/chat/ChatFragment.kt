@@ -3,22 +3,24 @@ package com.bitpunchlab.android.blechat_android.chat
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.Dialog
+import android.app.NotificationManager
 import android.bluetooth.BluetoothDevice
+import android.content.ComponentName
 import android.content.DialogInterface
 import android.content.Intent
+import android.content.ServiceConnection
 import android.os.Bundle
+import android.os.IBinder
 import android.util.Log
 import android.view.*
+import androidx.core.app.NotificationManagerCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
-import com.bitpunchlab.android.blechat_android.ConnectionState
-import com.bitpunchlab.android.blechat_android.R
-import com.bitpunchlab.android.blechat_android.START_MESSAGE_NOTIFICATION
-import com.bitpunchlab.android.blechat_android.STOP_MESSAGE_NOTIFICATION
+import com.bitpunchlab.android.blechat_android.*
 import com.bitpunchlab.android.blechat_android.chatNotification.MessageAlertService
 import com.bitpunchlab.android.blechat_android.chatService.ChatServiceClient
 import com.bitpunchlab.android.blechat_android.chatService.ChatServiceManager
@@ -60,7 +62,23 @@ class ChatFragment : Fragment() {
     private var status = MutableLiveData<String>("")
     private lateinit var messageList: LiveData<List<MessageModel>>
     private var isNotificationOn = MutableLiveData<Boolean>(false)
+    private lateinit var messageAlertService : MessageAlertService
+    private var mBound = false
+    //private lateinit var messageServiceConnection : ServiceConnection
+
     //private var disconnectAlert = MutableLiveData<Dialog>()
+
+    private val messageServiceConnection = object : ServiceConnection {
+        override fun onServiceConnected(className: ComponentName?, service: IBinder?) {
+            val binder = service as MessageAlertService.LocalBinder
+            messageAlertService = binder.getMessageServiceInstance()
+            mBound = true
+        }
+
+        override fun onServiceDisconnected(p0: ComponentName?) {
+            mBound = false
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -104,21 +122,11 @@ class ChatFragment : Fragment() {
         }
 
         deviceAddress?.let {
-            //messageViewModel.getDeviceMessages(deviceAddress!!)
-            //messageList = messageViewModel.getDeviceMessages(deviceAddress!!)
             messageViewModel.getDeviceMessages(deviceAddress!!)
         }
 
         messageAdapter = MessageListAdapter()
         messageBinding!!.messageRecycler.adapter = messageAdapter
-
-        isNotificationOn.observe(viewLifecycleOwner, Observer { isOn ->
-            if (!isOn) {
-                // link to menu interface here
-            } else {
-
-            }
-        })
 
         messageViewModel.messageRecordList.observe(viewLifecycleOwner, Observer { messageList ->
             messageList?.let {
@@ -139,7 +147,7 @@ class ChatFragment : Fragment() {
 
                 //saveMessage(msg)
                 messageViewModel.saveMessage(msg)
-                if (msg.deviceName != "You") {
+                if (msg.deviceName != "You" && isNotificationOn.value!!) {
                     startMessageNotification(msg.content)
                 }
             }
@@ -155,8 +163,8 @@ class ChatFragment : Fragment() {
 
                 //saveMessage(msg)
                 messageViewModel.saveMessage(msg)
-                if (msg.deviceName != "You") {
-                    //startMessageNotification(msg.content)
+                if (msg.deviceName != "You" && isNotificationOn.value!!) {
+                    startMessageNotification(msg.content)
                 }
             }
         })
@@ -205,6 +213,10 @@ class ChatFragment : Fragment() {
             }
         })
 
+        binding.toggleNotification.setOnClickListener {
+            isNotificationOn.value = !isNotificationOn.value!!
+        }
+
         binding.sendButton.setOnClickListener {
             //messageViewModel.verifyConfirmCode("abc")
             if (!binding.messageEditText.text.isNullOrBlank()) {
@@ -240,7 +252,30 @@ class ChatFragment : Fragment() {
             messageViewModel.verifyConfirmationCode(code)
         })
 
+        isNotificationOn.observe(viewLifecycleOwner, Observer { isOn ->
+            // we use the isOn value to control whether to send notification or not
+            // so, when it is on, we won't do anything, won't trigger the startNotification
+            // function.  wait until there is new message from the peer.
+            if (!isOn) {
+                // stop the message alert service
+                if (mBound) {
+                    // cancel the already shown notification
+                    messageAlertService.cancelNotificationSent()
+                }
+                stopMessageNotification()
+                // update the button to "turn on notification"
+                binding.toggleNotification.text = getString(R.string.start_notification)
+            } else {
+                binding.toggleNotification.text = getString(R.string.stop_notification)
+            }
+        })
         return binding.root
+    }
+
+    override fun onStop() {
+        super.onStop()
+        requireActivity().unbindService(messageServiceConnection)
+        mBound = false
     }
 
     override fun onDestroyView() {
@@ -251,9 +286,6 @@ class ChatFragment : Fragment() {
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.menu_chat, menu)
-        //R.id.notification
-        //menu.findItem(R.id.startNotification).isVisible = !isNotificationOn.value!!
-        //menu.findItem(R.id.stopNotification).isVisible = isNotificationOn.value!!
         super.onCreateOptionsMenu(menu, inflater)
     }
 
@@ -284,16 +316,6 @@ class ChatFragment : Fragment() {
                         ChatServiceClient.disconnectDevice(ChatServiceClient.disconnectedDevice!!)
                     }
                 }
-            }
-            R.id.startNotification -> {
-                //if (!isNotificationOn.value!!) {
-                    startMessageNotification("xxx")
-                //} else {
-                //    stopMessageNotification()
-                //}
-            }
-            R.id.stopNotification -> {
-                stopMessageNotification()
             }
         }
         return super.onOptionsItemSelected(item)
@@ -348,22 +370,30 @@ class ChatFragment : Fragment() {
         disconnectAlert.show()
     }
 
+    // we keep calling this method whenever there is new message from the peer
+    // when the notification service is on.
+    // we simply replace the old notification with the old message with the new ones.
     private fun startMessageNotification(message: String) {
         val intent = Intent(requireContext(), MessageAlertService::class.java)
         // this action is used to identify our intention inside the service
         // the service check if it is start, or stop, and behave so accordingly.
-        intent.action = START_MESSAGE_NOTIFICATION
+        //intent.action = START_MESSAGE_NOTIFICATION
         intent.putExtra("message", message)
         requireContext().startService(intent)
-        isNotificationOn.value = true
+        //isNotificationOn.value = true
         Log.i(TAG, "started notification service")
     }
 
     private fun stopMessageNotification() {
+
+        //val notificationManager = NotificationManagerCompat.from(requireContext())
+        //notificationManager.cancel(NOTIFICATION_ID)
+
+        // we stop the service here
         val intent = Intent(requireContext(), MessageAlertService::class.java)
-        intent.action = STOP_MESSAGE_NOTIFICATION
-        requireContext().startService(intent)
-        isNotificationOn.value = false
+        //intent.action = STOP_MESSAGE_NOTIFICATION
+        requireContext().stopService(intent)
+        //isNotificationOn.value = false
         Log.i(TAG, "stopping notification service")
     }
 

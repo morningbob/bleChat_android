@@ -8,7 +8,10 @@
         android:title="@string/disconnect"
         app:showAsAction="never" />
 
-    <item
+</menu>
+
+<!--
+<item
         android:id="@+id/startNotification"
         android:orderInCategory="100"
         android:title="@string/start_notification"
@@ -21,5 +24,4 @@
         android:title="@string/stop_notification"
         app:showAsAction="never"
         />
-
-</menu>
+-->

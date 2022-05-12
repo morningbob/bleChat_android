@@ -215,7 +215,7 @@ class MainFragment : Fragment() {
                 // we disconnect the device here, but I want to make sure that
                 // it is disconnected, I send a message to the peer device to ask it to
                 // disconnect too.
-                ChatServiceManager.sendMessage(DISCONNECTION_KEY)
+                //ChatServiceManager.sendMessage(DISCONNECTION_KEY)
                 // here I may wait for the confirmation code from the peer device before I
                 // actually perform disconnection.
 
