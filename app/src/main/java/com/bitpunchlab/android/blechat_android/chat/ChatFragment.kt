@@ -6,10 +6,7 @@ import android.app.AlertDialog
 import android.app.Dialog
 import android.app.NotificationManager
 import android.bluetooth.BluetoothDevice
-import android.content.ComponentName
-import android.content.DialogInterface
-import android.content.Intent
-import android.content.ServiceConnection
+import android.content.*
 import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
@@ -64,11 +61,9 @@ class ChatFragment : Fragment() {
     private var messageBinding: MessageListBinding? = null
     private lateinit var coroutineScope: CoroutineScope
     private var dismissDialogFinished = MutableLiveData(false)
-    private var isDisconnectedShown = false
     private var disconnectedDevice : BluetoothDevice? = null
     private var connectionStateHistory = ArrayList<ConnectionState>()
     private var status = MutableLiveData<String>("")
-    private lateinit var messageList: LiveData<List<MessageModel>>
     private var isNotificationOn = MutableLiveData<Boolean>(false)
     private lateinit var messageAlertService : MessageAlertService
     private var mBound = false
@@ -81,6 +76,7 @@ class ChatFragment : Fragment() {
         }
 
         override fun onServiceDisconnected(p0: ComponentName?) {
+            //messageAlertService = null
             mBound = false
         }
     }
@@ -96,11 +92,11 @@ class ChatFragment : Fragment() {
                     // we get the picked file uri here
                     // we also get the filename of the file
                     // in order to ask for user's confirmation to send the file
-                    //val chosenUri = result.data!!.data!!
-                    //val path: String = File(result.data!!.data!!.path).absolutePath
-                    //val filename = getFileName(path, chosenUri)
-                    //Log.i(TAG, "chosen file uri $chosenUri")
-                    //sendFileConfirmationAlert(filename, chosenUri)
+                    val chosenUri = result.data!!.data!!
+                    val path: String = File(result.data!!.data!!.path).absolutePath
+                    val filename = getFileName(path, chosenUri)
+                    Log.i(TAG, "chosen file uri $chosenUri, name: $filename")
+                    sendFileConfirmationAlert(filename, chosenUri)
                 }
             } else {
                 Log.i(TAG, "failed to start chooser")
@@ -159,7 +155,6 @@ class ChatFragment : Fragment() {
         messageViewModel.messageRecordList.observe(viewLifecycleOwner, Observer { messageList ->
             messageList?.let {
                 // submit list
-                //messageViewModel.messageRecordList.value = messageList
                 Log.i(TAG, "observed message list changed")
                 Log.i(TAG, "for message: ${messageList.last().content}")
                 messageAdapter.submitList(messageList)
@@ -280,8 +275,10 @@ class ChatFragment : Fragment() {
 
     override fun onStop() {
         super.onStop()
-        requireActivity().unbindService(messageServiceConnection)
-        mBound = false
+        if (mBound) {
+            requireActivity().unbindService(messageServiceConnection)
+            mBound = false
+        }
     }
 
     override fun onDestroyView() {
@@ -339,39 +336,6 @@ class ChatFragment : Fragment() {
         Log.i(TAG, "device saved")
     }
 
-    @SuppressLint("MissingPermission")
-    private fun disconnectionAlert(device: BluetoothDevice) {
-        var disconnectAlert = AlertDialog.Builder(context)
-
-        var identity = ""
-
-        if (!device.name.isNullOrBlank()) {
-            identity = device.name
-        } else if (!device.address.isNullOrBlank()) {
-            identity = "device with the address ${device.address}"
-        }
-
-        disconnectAlert.setTitle(getString(R.string.disconnection_alert_title))
-        disconnectAlert.setMessage("Disconnected with $identity")
-        //dismissedDialog.value = disconnectAlert
-        disconnectAlert.setPositiveButton(getString(R.string.back_to_device_list_button),
-            DialogInterface.OnClickListener() { dialog, button ->
-                // Bug: for the server, or the samsung tablet,
-                // the dialog is dimissed,  But for the client
-                // or the samsung phone, the dialog can't be
-                // dismissed.
-                dialog.dismiss()
-                findNavController().popBackStack()
-            })
-        disconnectAlert.setNegativeButton(getString(R.string.stay_in_chat_button),
-            DialogInterface.OnClickListener() { dialog, button ->
-                // do nothing, wait for user's next action
-
-            })
-        isDisconnectedShown = true
-        disconnectAlert.show()
-    }
-
     // we keep calling this method whenever there is new message from the peer
     // when the notification service is on.
     // we simply replace the old notification with the old message with the new ones.
@@ -380,10 +344,12 @@ class ChatFragment : Fragment() {
         // this action is used to identify our intention inside the service
         // the service check if it is start, or stop, and behave so accordingly.
         //intent.action = START_MESSAGE_NOTIFICATION
+        requireContext().bindService(intent, messageServiceConnection, Context.BIND_AUTO_CREATE)
         intent.putExtra("message", message)
         requireContext().startService(intent)
         //isNotificationOn.value = true
         Log.i(TAG, "started notification service")
+        showNotificationAlert("on")
     }
 
     private fun stopMessageNotification() {
@@ -393,6 +359,7 @@ class ChatFragment : Fragment() {
         requireContext().stopService(intent)
         //isNotificationOn.value = false
         Log.i(TAG, "stopping notification service")
+        showNotificationAlert("off")
     }
 
     @SuppressLint("MissingPermission")
@@ -451,6 +418,7 @@ class ChatFragment : Fragment() {
         sendFileAlert.setPositiveButton(getString(R.string.confirm_button)) { dialog, button ->
             // send the file
             Log.i(TAG, "start to send file here")
+            sendFileToPeer(chosenUri)
         }
 
         sendFileAlert.setNegativeButton(getString(R.string.cancel_button)) { dialog, button ->
@@ -458,5 +426,30 @@ class ChatFragment : Fragment() {
         }
 
         sendFileAlert.show()
+    }
+
+    // basically, we use the android's system's send file via bluetooth ability.
+    // we give control to that app.
+    private fun sendFileToPeer(chosenUri: Uri) {
+        val sharingIntent = Intent(Intent.ACTION_SEND)
+        sharingIntent.type = "*/*"
+        sharingIntent.setClassName(
+            "com.android.bluetooth",
+            "com.android.bluetooth.opp.BluetoothOppLauncherActivity"
+        )
+        sharingIntent.putExtra(Intent.EXTRA_STREAM, chosenUri)
+        startActivity(sharingIntent)
+    }
+
+    private fun showNotificationAlert(state: String) {
+        var showAlert = AlertDialog.Builder(context)
+
+        showAlert.setTitle(getString(R.string.notification_alert_title))
+        showAlert.setMessage("Notification is turned $state.")
+
+        showAlert.setPositiveButton(getString(R.string.ok_button)) { dialog, button ->
+            // do nothing
+            dialog.dismiss()
+        }
     }
 }

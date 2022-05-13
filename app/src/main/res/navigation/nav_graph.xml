@@ -8,7 +8,7 @@
     <fragment
         android:id="@+id/MainFragment"
         android:name="com.bitpunchlab.android.blechat_android.MainFragment"
-        android:label="@string/main_fragment_label"
+        android:label="@string/home_page"
         tools:layout="@layout/fragment_main">
 
         <action
@@ -20,6 +20,10 @@
         <action
             android:id="@+id/action_MainFragment_to_deviceSelectionFragment"
             app:destination="@id/deviceSelectionFragment" />
+        <argument
+            android:name="startFromNotification"
+            app:argType="boolean"
+            android:defaultValue="false" />
     </fragment>
     <fragment
         android:id="@+id/PermissionFragment"
@@ -34,7 +38,7 @@
     <fragment
         android:id="@+id/chatFragment"
         android:name="com.bitpunchlab.android.blechat_android.chat.ChatFragment"
-        android:label="ChatFragment" >
+        android:label="@string/chat_view" >
         <argument
             android:name="isClient"
             app:argType="boolean"
@@ -50,7 +54,7 @@
     <fragment
         android:id="@+id/deviceSelectionFragment"
         android:name="com.bitpunchlab.android.blechat_android.chatRecords.DeviceSelectionFragment"
-        android:label="DeviceSelectionFragment" >
+        android:label="@string/select_device_page" >
         <action
             android:id="@+id/action_deviceSelectionFragment_to_chatRecordFragment"
             app:destination="@id/chatRecordFragment" />
@@ -58,7 +62,7 @@
     <fragment
         android:id="@+id/chatRecordFragment"
         android:name="com.bitpunchlab.android.blechat_android.chatRecords.ChatRecordFragment"
-        android:label="ChatRecordFragment" >
+        android:label="@string/chat_record" >
         <argument
             android:name="deviceAddress"
             app:argType="string"

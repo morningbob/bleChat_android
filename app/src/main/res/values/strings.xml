@@ -23,7 +23,7 @@
     <string name="connect_device_alert_desc"></string>
     <string name="confirm_button">Confirm</string>
     <string name="send_button">Send</string>
-    <string name="message_title">Message</string>
+    <string name="message_title">Enter a message: </string>
     <string name="start_server">Start Server</string>
     <string name="stop_server">Stop Server</string>
     <string name="incoming_connection_alert_title">Incoming Connection</string>
@@ -47,5 +47,10 @@
     <string name="send_file_confirmation_alert_title">Send File Confirmation</string>
     <string name="send_file_confirmation_alert_desc"></string>
     <string name="send_file">Send a File</string>
+    <string name="notification_alert_title">Notification State</string>
+    <string name="home_page">Home Screen</string>
+    <string name="select_device_page">Please select a device</string>
+    <string name="chat_record">Chat Record</string>
+    <string name="chat_view">Chat View</string>
 
 </resources>

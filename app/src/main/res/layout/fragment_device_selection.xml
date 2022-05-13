@@ -12,9 +12,11 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
             android:text="@string/device_text"
-            android:textSize="15sp"
-            android:layout_margin="10sp"/>
+            android:textSize="25sp"
+            android:textAlignment="center"
+            />
 
         <include
             android:id="@+id/device_layout"

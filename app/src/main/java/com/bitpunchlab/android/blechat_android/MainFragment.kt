@@ -36,12 +36,11 @@ class MainFragment : Fragment() {
     private val binding get() = _binding!!
     private lateinit var deviceAdapter: DeviceListAdapter
     private lateinit var deviceViewModel: DeviceViewModel
-    private lateinit var messageViewModel: MessageViewModel
     private var connectDevice: BluetoothDevice? = null
     private lateinit var database: BLEDatabase
     private var deviceBinding: DeviceListBinding? = null
     private var appStateHistory = ArrayList<ConnectionState>()
-    //private var bluetoothAdapter: BluetoothAdapter? = null
+    private var startFromNotification = false
 
     @OptIn(InternalCoroutinesApi::class)
     @SuppressLint("MissingPermission")
@@ -55,6 +54,28 @@ class MainFragment : Fragment() {
         setHasOptionsMenu(true)
         _binding = FragmentMainBinding.inflate(inflater, container, false)
         deviceBinding = binding.deviceLayout
+
+        startFromNotification = requireArguments().getBoolean("startFromNotification")
+        if (startFromNotification && (ChatServiceManager.connectedDevice != null ||
+                    ChatServiceClient.connectedDevice != null)) {
+            // here we know the user tapped the notification, we decide if the user is
+            // connected with a device, if so, we navigate to chat view
+            // if not, we do nothing and stay here
+            val bundle = Bundle()
+            if (ChatServiceManager.connectedDevice != null) {
+                connectDevice = ChatServiceManager.connectedDevice
+                bundle.putBoolean("isClient", false)
+                bundle.putString("deviceName", ChatServiceManager.connectedDevice!!.name)
+                bundle.putString("deviceAddress", ChatServiceManager.connectedDevice!!.address)
+            } else {
+                connectDevice = ChatServiceClient.connectedDevice
+                bundle.putBoolean("isClient", true)
+                bundle.putString("deviceName", ChatServiceClient.connectedDevice!!.name)
+                bundle.putString("deviceAddress", ChatServiceClient.connectedDevice!!.address)
+            }
+
+            findNavController().navigate(R.id.action_MainFragment_to_chatFragment, bundle)
+        }
 
         database = BLEDatabase.getInstance(context)
 
@@ -210,15 +231,6 @@ class MainFragment : Fragment() {
             })
         incomingAlert.setNegativeButton(getString(R.string.cancel_button),
             DialogInterface.OnClickListener() { dialog, button ->
-                // disconnect the device here
-                //ChatServiceManager.disconnectDevice(device)
-                // we disconnect the device here, but I want to make sure that
-                // it is disconnected, I send a message to the peer device to ask it to
-                // disconnect too.
-                //ChatServiceManager.sendMessage(DISCONNECTION_KEY)
-                // here I may wait for the confirmation code from the peer device before I
-                // actually perform disconnection.
-
             })
         incomingAlert.show()
     }

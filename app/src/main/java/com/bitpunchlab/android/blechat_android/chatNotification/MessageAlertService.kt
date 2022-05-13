@@ -8,14 +8,13 @@ import android.content.Context
 import android.content.Intent
 import android.os.Binder
 import android.os.Build
+import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.bitpunchlab.android.blechat_android.NOTIFICATION_ID
-import com.bitpunchlab.android.blechat_android.R
-import com.bitpunchlab.android.blechat_android.START_MESSAGE_NOTIFICATION
-import com.bitpunchlab.android.blechat_android.STOP_MESSAGE_NOTIFICATION
+import androidx.navigation.NavDeepLinkBuilder
+import com.bitpunchlab.android.blechat_android.*
 import com.bitpunchlab.android.blechat_android.chat.ChatFragment
 
 private const val TAG = "MessageAlertService"
@@ -66,8 +65,18 @@ class MessageAlertService : Service() {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
 
-        val pendingIntent: PendingIntent = PendingIntent
-            .getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+        val bundle = Bundle()
+        bundle.putBoolean("startFromNotification", true)
+
+        var pendingIntent : PendingIntent = NavDeepLinkBuilder(applicationContext)
+            .setComponentName(MainActivity::class.java)
+            .setGraph(R.navigation.nav_graph)
+            .setDestination(R.id.MainFragment)
+            .setArguments(bundle)
+            .createPendingIntent()
+
+        //val pendingIntent: PendingIntent = PendingIntent
+        //    .getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
 
         var builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(androidx.core.R.drawable.notification_icon_background)

@@ -9,6 +9,6 @@ import kotlinx.android.parcel.Parcelize
 @Parcelize
 data class DeviceModel (
     @PrimaryKey var address: String,
-    var name: String?
+    var name: String? = "Unknown"
     ) : Parcelable
 
