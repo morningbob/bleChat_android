@@ -52,5 +52,6 @@
     <string name="select_device_page">Please select a device</string>
     <string name="chat_record">Chat Record</string>
     <string name="chat_view">Chat View</string>
+    <string name="unknown_name">unknown</string>
 
 </resources>
